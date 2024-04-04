@@ -1,0 +1,14 @@
+{
+  "name": "grib-downloader",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.0",
+    "axios": "^0.27.2",
+    "winston": "^3.13.0",
+    "winston-logstash-transport": "^2.0.0"
+  }
+}
