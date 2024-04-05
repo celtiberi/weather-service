@@ -3,18 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const amqp = require('amqplib');
 
-const winston = require('winston');
-const { LogstashTransport } = require('winston-logstash-transport');
+const createLogger = require('weather-service-logger');
+const logger = createLogger('boat-service');
 
-const logger = winston.createLogger({
-  transports: [
-    new LogstashTransport({
-      host: 'logstash',
-      port: 5000,
-      format: winston.format.json(),
-    }),
-  ],
-});
+logger.info('Hello, grib-downloader!');
 
 // Example log statement
 // logger.info('Hello, Logstash!');

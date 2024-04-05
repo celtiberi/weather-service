@@ -7,8 +7,7 @@
   },
   "dependencies": {
     "amqplib": "^0.10.0",
-    "axios": "^0.27.2",
-    "winston": "^3.13.0",
+    "axios": "^1.6.8",
     "winston-logstash-transport": "^2.0.0"
   }
 }

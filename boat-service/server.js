@@ -1,6 +1,11 @@
 const express = require('express');
 const mongoose = require('mongoose');
 
+const createLogger = require('weather-service-logger');
+const logger = createLogger('boat-service');
+
+logger.info('Hello, boat-service!');
+
 const app = express();
 app.use(express.json());
 
