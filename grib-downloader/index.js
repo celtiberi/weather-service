@@ -96,12 +96,12 @@ async function checkForNewGribFile() {
   try {
     const currentDate = new Date();
     const gribFilePath = await downloadGribFile(currentDate);
+    logger.info(`New GRIB file downloaded: ${gribFilePath}`);
     await sendMessageToQueue(`New GRIB file available: ${gribFilePath}`);
   } catch (error) {
-    console.error(`Failed to check for new GRIB file: ${error.message}`);
+    logger.error(`Failed to check for new GRIB file: ${error.message}`);
   }
 }
-
 // Start checking for new GRIB files every hour
 setInterval(checkForNewGribFile, 60 * 60 * 1000);
 

@@ -28,7 +28,7 @@ services:
     container_name: boat-service
     restart: always
     ports:
-      - "3000:3000"
+      - "3010:3000"
     depends_on:
       - mongodb
       - rabbitmq
@@ -61,7 +61,7 @@ services:
       - grafana_data:/var/lib/grafana
 
   elasticsearch:
-    image: elasticsearch:7.13.0
+    image: webhippie/elasticsearch
     container_name: elasticsearch
     restart: always
     environment:
@@ -73,6 +73,7 @@ services:
 
   logstash:
     image: logstash:7.13.0
+    platform: linux/x86_64
     container_name: logstash
     restart: always
     volumes:
@@ -82,6 +83,7 @@ services:
 
   kibana:
     image: kibana:7.13.0
+    platform: linux/x86_64
     container_name: kibana
     restart: always
     ports:
