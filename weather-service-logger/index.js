@@ -8,7 +8,7 @@ const createLogger = (serviceName) => {
       new winston.transports.Console(),
       new LogstashTransport({
         host: process.env.LOGSTASH_HOST || 'logstash',
-        port: process.env.LOGSTASH_PORT || 5000,
+        port: process.env.LOGSTASH_PORT || 5044,
         format: winston.format.json(),
       }),
     ],
