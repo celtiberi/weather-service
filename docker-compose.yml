@@ -32,11 +32,12 @@ services:
     depends_on:
       - mongodb
       - rabbitmq
-      - logstash
-      - elasticsearch
-      - kibana
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/boats
+      LOGSTASH_HOST: localhost
+      LOGSTASH_PORT: 5044
     networks:
-      - elk
+      - docker-elk_elk
 
   grib-downloader:
     build: ./grib-downloader
@@ -47,11 +48,13 @@ services:
     depends_on:
       - mongodb
       - rabbitmq
-      - logstash
-      - elasticsearch
-      - kibana
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/boats
+      LOGSTASH_HOST: localhost
+      LOGSTASH_PORT: 5044
     networks:
-      - elk
+      - docker-elk_elk
+  
 
   prometheus:
     image: prom/prometheus
@@ -71,72 +74,12 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
 
-  elasticsearch:
-    build:
-      context: ./docker-elk/elasticsearch/
-      args:
-        ELASTIC_VERSION: ${ELASTIC_VERSION}
-    volumes:
-      - ./docker-elk/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
-      - elasticsearch:/usr/share/elasticsearch/data:Z
-    ports:
-      - 9200:9200
-      - 9300:9300
-    environment:
-      node.name: elasticsearch
-      ES_JAVA_OPTS: -Xms512m -Xmx512m
-      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
-      discovery.type: single-node
-    networks:
-      - elk
-    restart: unless-stopped
-
-  logstash:
-    build:
-      context: ./docker-elk/logstash/
-      args:
-        ELASTIC_VERSION: ${ELASTIC_VERSION}
-    volumes:
-      - ./docker-elk/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro,Z
-      - ./docker-elk/logstash/pipeline:/usr/share/logstash/pipeline:ro,Z
-    ports:
-      - 5044:5044
-      - 50000:50000/tcp
-      - 50000:50000/udp
-      - 9600:9600
-    environment:
-      LS_JAVA_OPTS: -Xms256m -Xmx256m
-      LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}
-    networks:
-      - elk
-    depends_on:
-      - elasticsearch
-    restart: unless-stopped
-
-  kibana:
-    build:
-      context: ./docker-elk/kibana/
-      args:
-        ELASTIC_VERSION: ${ELASTIC_VERSION}
-    volumes:
-      - ./docker-elk/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
-    ports:
-      - 5601:5601
-    environment:
-      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
-    networks:
-      - elk
-    depends_on:
-      - elasticsearch
-    restart: unless-stopped
-
 volumes:
   mongodb_data:
   rabbitmq_data:
   grib_data:
   grafana_data:
-  elasticsearch:
 
 networks:
-  elk:
-    driver: bridge
+  docker-elk_elk:
+    external: true
