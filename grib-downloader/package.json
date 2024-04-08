@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "debug": "node --inspect=0.0.0.0:9229 index.js"
   },
   "dependencies": {
     "amqplib": "^0.10.0",
     "axios": "^1.6.8",
-    "winston-logstash-transport": "^2.0.0"
+    "weather-service-logger": "^1.0.1"
   }
 }

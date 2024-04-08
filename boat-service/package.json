@@ -1,14 +1,14 @@
 {
   "name": "boat-service",
-  
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "debug": "node --inspect=0.0.0.0:9229 index.js"
   },
   "dependencies": {
     "express": "^4.17.1",
     "mongoose": "^5.12.9",
-    "weather-service-logger": "^1.0.0"
+    "weather-service-logger": "^1.0.1"
   }
 }

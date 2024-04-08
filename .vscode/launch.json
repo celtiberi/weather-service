@@ -1,0 +1,19 @@
+{
+    "configurations": [
+
+        {
+            "name": "Docker Node.js Launch - grib-downloader",
+            "type": "docker",
+            "request": "launch",
+            "preLaunchTask": "docker-run: debug",
+            "platform": "node",
+            "node": {
+                "package": "${workspaceFolder}/grib-downloader/package.json",
+                "localRoot": "${workspaceFolder}/grib-downloader",
+                "remoteRoot": "/app",
+                "port": 9229
+            },
+            "removeContainerAfterDebug": true
+        }
+    ]
+}

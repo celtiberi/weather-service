@@ -4,7 +4,7 @@ const path = require('path');
 const amqp = require('amqplib');
 
 const createLogger = require('weather-service-logger');
-const logger = createLogger('boat-service');
+const logger = createLogger('grib-downloader', process.env.LOGSTASH_PORT || 5044);
 
 logger.info('Hello, grib-downloader!');
 
@@ -20,7 +20,7 @@ async function getLatestCycle(formattedDate) {
 
   try {
     const response = await axios.get(url);
-    const cycles = response.data.match(/(?<=<a href=")[^"]+(?=">)/g);
+    const cycles = response.data.match(/(?<=dir=%2Fgfs\.\d{8}%2F)\d{2}/g);
 
     if (!cycles || cycles.length === 0) {
       throw new Error('No cycles found for the given date.');

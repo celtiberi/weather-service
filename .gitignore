@@ -1,3 +1,7 @@
+docker-elk/
+
+.DS_Store
+
 # Logs
 logs
 *.log

@@ -29,20 +29,23 @@ services:
     restart: always
     ports:
       - "3010:3000"
+      - "9229:9229" # debug port
     depends_on:
       - mongodb
       - rabbitmq
     environment:
       MONGODB_URI: mongodb://mongodb:27017/boats
-      LOGSTASH_HOST: localhost
-      LOGSTASH_PORT: 5044
+      LOGSTASH_HOST: localhost      
+      LOGSTASH_PORT: ${LOGSTASH_PORT}
     networks:
-      - docker-elk_elk
+      - docker-elk_elk    
 
   grib-downloader:
     build: ./grib-downloader
     container_name: grib-downloader
     restart: always
+    ports:
+      - "9229:9229" # map the debug port to the host machine
     volumes:
       - grib_data:/app/grib_files
     depends_on:
@@ -51,7 +54,7 @@ services:
     environment:
       MONGODB_URI: mongodb://mongodb:27017/boats
       LOGSTASH_HOST: localhost
-      LOGSTASH_PORT: 5044
+      LOGSTASH_PORT: ${LOGSTASH_PORT}    
     networks:
       - docker-elk_elk
   

@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 
 const createLogger = require('weather-service-logger');
-const logger = createLogger('boat-service');
+const logger = createLogger('boat-service', process.env.LOGSTASH_PORT || 5044);
 
 logger.info('Hello, boat-service!');
 
