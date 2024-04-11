@@ -16,17 +16,6 @@
 		},
 		{
 			"type": "docker-run",
-			"label": "docker-run: release",
-			"dependsOn": [
-				"docker-build"
-			],
-			"platform": "node",
-			"node": {
-				"package": "${workspaceFolder}/grib-downloader/package.json"
-			}
-		},
-		{
-			"type": "docker-run",
 			"label": "docker-run: debug",
 			"dependsOn": [
 				"docker-build"
@@ -36,7 +25,14 @@
 					"DEBUG": "*",
 					"NODE_ENV": "development"
 				},
-				"network": "docker-elk_elk"
+				"containerName": "grib-downloader",
+				"network": "docker-elk_elk",
+				"volumes": [
+					{
+						"localPath": "/var/lib/docker/volumes/weather-service_grib_data/_data",
+						"containerPath": "/app/grib_files"
+					}
+				]
 			},
 			"node": {
 				"package": "${workspaceFolder}/grib-downloader/package.json",

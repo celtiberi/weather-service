@@ -13,8 +13,12 @@ up:
 down:
 	$(DOCKER_COMPOSE) down
 
-logs:
+logs-all:
 	cd docker-elk && $(DOCKER_COMPOSE) logs -f
+
+logs:
+	 $(DOCKER_COMPOSE) logs $(filter-out $@,$(MAKECMDGOALS))
+
 
 restart:
 	$(DOCKER_COMPOSE) restart
