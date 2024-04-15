@@ -37,6 +37,20 @@ services:
     networks:
       - docker-elk_elk      
 
+  point-forecast-service:
+    build: ./point-forecast-service
+    container_name: point-forecast-service
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      RABBITMQ_URL: amqp://admin:password@rabbitmq:5672
+      LOGSTASH_HOST: localhost
+      LOGSTASH_PORT: ${LOGSTASH_PORT}    
+    networks:
+      - docker-elk_elk
+      
   boat-service:
     build: ./boat-service
     container_name: boat-service
@@ -61,7 +75,7 @@ services:
     container_name: grib-downloader
     restart: always
     ports:
-      - "9229:9229" # map the debug port to the host machine
+      - "9231:9229" # map the debug port to the host machine
     volumes:
       - grib_data:/app/grib_files
     depends_on:

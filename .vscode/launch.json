@@ -1,6 +1,37 @@
 {
     "configurations": [
+        {
+            "name": "Debug Jest Tests - point-forecast-service",
+            "type": "node",
+            "request": "launch",
+            "runtimeArgs": [
+                "--inspect-brk=9229",
+                "${workspaceFolder}/point-forecast-service/node_modules/.bin/jest",
+                "--runInBand"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "timeout": 30000,
+            "cwd": "${workspaceFolder}/point-forecast-service",
+            "env": {
+                "NODE_ENV": "test"
+            },
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
 
+        {
+            "name": "Debug point-forecast-service",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/point-forecast-service/index.js",
+            "env": {
+                "DEBUG": "true",
+                "RABBITMQ_URL": "amqp://admin:password@localhost:5672"
+            },
+            "console": "integratedTerminal"
+        },
         {
             "name": "Docker Node.js Launch - grib-downloader",
             "type": "docker",

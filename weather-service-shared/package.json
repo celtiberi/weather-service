@@ -1,0 +1,21 @@
+{
+  "name": "weather-service-shared",
+  "version": "1.0.3",
+  "description": "",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./schemas": "./schemas/index.js",
+    "./utils": "./utils/index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "winston": "^3.13.0",
+    "winston-logstash-transport": "^2.0.0"
+  }
+}
