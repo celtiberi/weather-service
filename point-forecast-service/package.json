@@ -3,21 +3,31 @@
   "version": "1.0.0",
   "main": "index.js",
   "devDependencies": {
-    "jest": "^29.7.0"
+    "@pager/semantic-release-config": "2.x",
+    "chai": "4.x",
+    "dotenv": "16.3.1",
+    "eslint": "7.x",
+    "eslint-config-hapi": "12.x",
+    "eslint-plugin-hapi": "4.x",
+    "mocha": "10.x",
+    "semantic-release": "21.x",
+    "sinon": "15.x"
   },
   "dependencies": {
     "@pager/jackrabbit": "github:pagerinc/jackrabbit",
     "@turf/turf": "^6.5.0",
     "amqplib": "^0.10.4",
+    "fetch": "^1.1.0",
     "http": "^0.0.1-security",
+    "node-fetch": "^2.7.0",
     "path": "^0.12.7",
     "shapefile": "^0.6.6",
     "url": "^0.11.3",
-    "weather-service-shared": "^1.0.3"
+    "weather-service-logger": "latest"
   },
   "scripts": {
     "start": "node index.js",
     "debug": "node --inspect=0.0.0.0:9229 index.js",
-    "test": "jest --config tests/jest.config.js"
+    "test": "mocha --require @babel/register --recursive --exit"
   }
 }

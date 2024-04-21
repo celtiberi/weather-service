@@ -1,6 +1,12 @@
 version: '3'
 
+# TODO grafana is running on port 3000 which is annoying.  See if that can be changed
+include:
+  - docker-elk/docker-compose.yml
+  - apisix-docker/example/docker-compose.yml  # when this is pushed to the cloud it will need to be changed for the different architecture
+
 services:
+
   mongodb:
     image: mongo
     container_name: mongodb
@@ -15,27 +21,44 @@ services:
       timeout: 10s
       retries: 5
     networks:
-      - docker-elk_elk    
+      - weather
 
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:3.11-management
     container_name: rabbitmq
     restart: always
     ports:
       - "5672:5672"
       - "15672:15672"
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: password
+      - ./rabbitmq-setup/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - ./rabbitmq-setup/definitions.json:/etc/rabbitmq/definitions.json
     healthcheck:
       test: rabbitmq-diagnostics check_port_connectivity
       interval: 1s
       timeout: 3s
       retries: 30
     networks:
-      - docker-elk_elk      
+      - weather
+
+  boat-api:
+    build: ./boat-api
+    container_name: boat-api
+    restart: always
+    ports:
+      - "3050:3000"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongodb: 
+        condition: service_healthy
+    environment:
+      RABBITMQ_URL: amqp://admin:password@rabbitmq:5672
+      MONGODB_URI: mongodb://mongodb:27017/boats
+      LOGSTASH_HOST: localhost      
+      LOGSTASH_PORT: ${LOGSTASH_PORT}
+    networks:
+      - weather
 
   point-forecast-service:
     build: ./point-forecast-service
@@ -45,30 +68,30 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      RABBITMQ_URL: amqp://admin:password@rabbitmq:5672
+      RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
       LOGSTASH_HOST: localhost
-      LOGSTASH_PORT: ${LOGSTASH_PORT}    
+      LOGSTASH_PORT: ${LOGSTASH_PORT} 
     networks:
-      - docker-elk_elk
-      
-  boat-service:
-    build: ./boat-service
-    container_name: boat-service
+      - weather       
+
+  weather-api:
+    build: ./weather-api
+    container_name: weather-api
     restart: always
     ports:
-      - "3010:3000"
-      - "9230:9229" # debug port
+      - "3200:3100"
     depends_on:
       rabbitmq:
         condition: service_healthy
       mongodb: 
         condition: service_healthy
     environment:
+      RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
       MONGODB_URI: mongodb://mongodb:27017/boats
       LOGSTASH_HOST: localhost      
       LOGSTASH_PORT: ${LOGSTASH_PORT}
     networks:
-      - docker-elk_elk    
+      - weather
 
   grib-downloader:
     build: ./grib-downloader
@@ -87,32 +110,10 @@ services:
       MONGODB_URI: mongodb://mongodb:27017/boats
       RABBITMQ_URL: amqp://admin:password@rabbitmq:5672
       LOGSTASH_HOST: localhost
-      LOGSTASH_PORT: ${LOGSTASH_PORT}    
+      LOGSTASH_PORT: ${LOGSTASH_PORT} 
     networks:
-      - docker-elk_elk
+      - weather
   
-
-  prometheus:
-    image: prom/prometheus
-    container_name: prometheus
-    restart: always
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - "9090:9090"
-    networks:
-      - docker-elk_elk    
-
-  grafana:
-    image: grafana/grafana
-    container_name: grafana
-    restart: always
-    ports:
-      - "3000:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
-    networks:
-      - docker-elk_elk    
 
 volumes:
   mongodb_data:
@@ -121,5 +122,5 @@ volumes:
   grafana_data:
 
 networks:
-  docker-elk_elk:
-    external: true
+  weather:
+    driver: bridge

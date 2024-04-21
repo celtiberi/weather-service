@@ -26,3 +26,7 @@ restart:
 clean:
 	docker ps -q | xargs -r docker stop
 	docker system prune -a --volumes -f
+
+reup:
+	$(DOCKER_COMPOSE) build $(filter-out $@,$(MAKECMDGOALS))
+	$(DOCKER_COMPOSE) up -d $(filter-out $@,$(MAKECMDGOALS))

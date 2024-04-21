@@ -9,6 +9,6 @@
   "dependencies": {
     "amqplib": "^0.10.0",
     "axios": "^1.6.8",
-    "weather-service-logger": "^1.0.1"
+    "weather-service-logger": "latest"
   }
 }

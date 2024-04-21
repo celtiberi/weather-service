@@ -1,0 +1,21 @@
+{
+  "name": "weather-api",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "debug": "node --inspect=0.0.0.0:9229 index.js"
+  },
+  "dependencies": {
+    "@pager/jackrabbit": "^5.5.0",
+    "chai-http": "^4.4.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.17.1",
+    "mongoose": "^5.12.9",
+    "weather-service-logger": "latest"
+  },
+  "devDependencies": {
+    "chai": "4.x",
+    "mocha": "10.x"
+  }
+}

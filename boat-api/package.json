@@ -9,6 +9,6 @@
   "dependencies": {
     "express": "^4.17.1",
     "mongoose": "^5.12.9",
-    "weather-service-logger": "^1.0.1"
+    "weather-service-logger": "latest"
   }
 }
