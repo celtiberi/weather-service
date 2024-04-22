@@ -27,12 +27,13 @@ const exchange = rabbit.default();
 const rpc_point_forecast_queue = exchange.queue({ name: 'rpc_point_forecast_queue' });
 //  ---------------------------
 
+// TODO maybe do not start the server until the queue is ready?  Why would it not be ready?
 rpc_point_forecast_queue.on('ready', () => {
   logger.info('rpc_point_forecast_queue is ready'); 
 });
 
 rpc_point_forecast_queue.on('error', (err) => {
-  logger.error(`Error in rpc_point_forecast_queue: ${err.message}`);
+  logger.error(`rpc_point_forecast_queue on error: ${err.message}`);
 });
 
 app.get('/point-forecast', async (req, res) => {
@@ -49,6 +50,12 @@ app.get('/point-forecast', async (req, res) => {
     res.json(forecasts);
   };
   
+  // TODO the below code will never be called.  Why? I think I am simply missing the event (time)
+  //    Better would be if there was an onReady promise from Jackrabbit (there might be).
+  // rpc_point_forecast_queue.on('ready', () => {
+  //   logger.info('rpc_point_forecast_queue is ready'); 
+  // });
+
   // TODO should have a timeout.  There is an example in jackrabbit
   exchange.publish( messageData, {
     key: 'rpc_point_forecast_queue',

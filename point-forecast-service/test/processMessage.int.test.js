@@ -2,11 +2,21 @@
 const jackrabbit = require('@pager/jackrabbit');
 const chai = require('chai');
 const Assert = require('chai').assert;
-
+const pfs = require('../index.js')
 //import { processMessage } from '../index.js'; // Adjust the path as necessary
 const shared = require('weather-service-shared');
+const path = require('path');
+const dotenv = require('dotenv');
+const getDotEnvPath = (env) => {
+  if (env === 'TEST') {
+    return '.env.test';
+  }
+  return '.env';
+};
 
-const RABBITMQ_URL="amqp://admin:password@localhost:5672"
+dotenv.config({ path: path.resolve(process.cwd(), getDotEnvPath(process.env.NODE_ENV?.toUpperCase())) });
+
+const RABBITMQ_URL=process.env.RABBITMQ_URL
 
 
 describe('processMessage', function() {
@@ -31,7 +41,6 @@ describe('processMessage', function() {
     };
 
     const exchange = rabbit.default();
-    const rpc = exchange.queue({ name: 'point_forecast', prefetch: 1, durable: true });
     
     const onReply = (response) => {
       console.log(response)
@@ -40,11 +49,9 @@ describe('processMessage', function() {
       done()
     };
     
-    rpc.on('ready', () => {
-        exchange.publish( pointForecastRequest, {
-            key: 'point_forecast',
-            reply: onReply    // auto sends necessary info so the reply can come to the exclusive reply-to queue for this rabbit instance
-        });
+    exchange.publish( pointForecastRequest, {
+        key: 'rpc_point_forecast_queue',
+        reply: onReply    // auto sends necessary info so the reply can come to the exclusive reply-to queue for this rabbit instance
     });
     
   }).timeout(25 * 1000); 

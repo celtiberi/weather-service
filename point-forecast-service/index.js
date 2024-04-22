@@ -6,6 +6,7 @@ const fs = require('fs');
 const shapefile = require('shapefile');
 const turf = require('@turf/turf');
 const fetch = require('node-fetch');
+const {cacheForecast, getForecast: getForecastFromCache} = require('./forecastCache.js');
 
 const dotenv = require('dotenv');
 const getDotEnvPath = (env) => {
@@ -21,6 +22,7 @@ const createLogger = require('weather-service-shared');
 const logger = createLogger('point-forecast-service', process.env.LOGSTASH_PORT || 5044);
 
 logger.info(`RABBITMQ_URL: ${process.env.RABBITMQ_URL}`);
+
 
 // Define paths for marine zone shapefiles and dbf files
 // Files come from https://www.weather.gov/gis/MarineZones
@@ -52,7 +54,7 @@ const highSeasGeojsonPromise = shapefile
   });
 
 // Fetch marine text forecast by zone ID and name
-async function getForecast(id, zoneName, zoneType) {
+async function fetchForecast(id, zoneName, zoneType) {
   logger.info(`Function getForecast called at: ${new Date().toISOString()}`);
   id = id.toLowerCase();
   const zoneRegion = id.split('z')[0].toLowerCase();
@@ -77,11 +79,11 @@ async function getForecast(id, zoneName, zoneType) {
 }
 
 async function getCoastalMarineTextForecast(coastalZone) {
-  return await getForecast(coastalZone.id, coastalZone.name, 'coastal');
+  return await fetchForecast(coastalZone.id, coastalZone.name, 'coastal');
 }
 
 async function getOffshoreMarineTextForecast(offshoreZone) {
-  return await getForecast(offshoreZone.id, offshoreZone.name, 'offshore');
+  return await fetchForecast(offshoreZone.id, offshoreZone.name, 'offshore');
 }
 
 async function getHighSeasMarineTextForecast(highSeasZone) {
@@ -175,19 +177,41 @@ async function getMarineZones(lat, lon) {
 // Fetch point forecast based on latitude and longitude
 async function getPointForecasts(lat, lon) {
   const zones = await getMarineZones(lat, lon);
-  logger.info('Calling getCoastalMarineTextForecast()');
-  const coastalForecast = zones.coastal
-    ? await getCoastalMarineTextForecast(zones.coastal)
-    : null;
-  logger.info('Calling getOffshoreMarineTextForecast()');
-  const offshoreForecast = zones.offshore
-    ? await getOffshoreMarineTextForecast(zones.offshore)
-    : null;
-  logger.info('Calling getHighSeasMarineTextForecast()');
-  const highSeasForecast = zones.high_seas.name
-    ? await getHighSeasMarineTextForecast(zones.high_seas)
-    : null;
-  logger.info('Finished fetching forecasts');
+  
+  let coastalForecast = null;
+  let offshoreForecast = null;
+  let highSeasForecast = null;
+
+  try {
+    if(zones.coastal) {
+      let forecast = getForecastFromCache(zones.coastal.id)
+      if(!forecast) {
+        forecast = await getCoastalMarineTextForecast(zones.coastal)
+        cacheForecast(zones.coastal.id, forecast);
+      }
+      coastalForecast = forecast
+    }
+
+    if(zones.offshore) {
+      let forecast = getForecastFromCache(zones.offshore.id)
+      if(!forecast) {
+        forecast = await getOffshoreMarineTextForecast(zones.offshore)
+        cacheForecast(zones.offshore.id, forecast);
+      }
+      offshoreForecast =forecast
+    }
+
+    if(zones.high_seas) {
+      let forecast = getForecastFromCache(zones.high_seas.name)
+      if(!forecast) {
+        forecast = await getHighSeasMarineTextForecast(zones.high_seas)
+        cacheForecast(zones.high_seas.name, forecast);
+      }
+      highSeasForecast = forecast
+    }
+  } catch (error) {
+    console.error(`Error fetching forecast: ${error.message}`);
+  }
 
   return {
     coastal: coastalForecast,
@@ -223,7 +247,7 @@ async function onRequest(data, reply) {
 }
 
 // Initialize RabbitMQ consumer for point forecast requests
-(async () => {
+module.exports = (async function pointForecastService() {
   const rabbit = jackrabbit(process.env.RABBITMQ_URL);
   const exchange = rabbit.default();
   const rpc_point_forecast_queue = exchange.queue({ name: 'rpc_point_forecast_queue' });
@@ -243,3 +267,4 @@ async function onRequest(data, reply) {
     process.exit(1); // This will stop the process and allow Docker to restart it
   });
 })();
+

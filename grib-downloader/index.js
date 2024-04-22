@@ -17,7 +17,7 @@ const GRIB_SAVE_PATH = process.env.GRIB_SAVE_PATH || '/app/grib_files';
 const NOAA_BASE_URL = 'https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl';          
 
 logger.info('RABBITMQ_URL=' + process.env.RABBITMQ_URL);
-const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://rabbitmq:5672';
+const RABBITMQ_URL = process.env.RABBITMQ_URL;
 
 // Define the available variables and levels
 const variables = {
