@@ -17,7 +17,7 @@ logs-all:
 	cd docker-elk && $(DOCKER_COMPOSE) logs -f
 
 logs:
-	 $(DOCKER_COMPOSE) logs $(filter-out $@,$(MAKECMDGOALS))
+	 $(DOCKER_COMPOSE) logs -f $(filter-out $@,$(MAKECMDGOALS))
 
 
 restart:

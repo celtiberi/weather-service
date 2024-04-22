@@ -1,0 +1,78 @@
+{
+  "rabbit_version": "3.11.28",
+  "rabbitmq_version": "3.11.28",
+  "product_name": "RabbitMQ",
+  "product_version": "3.11.28",
+  "users": [
+    {
+      "name": "admin",
+      "password_hash": "Wsc9IKtfSKUWPrN4LsgL7M+OdVEMijdcM7omOwq6mErOK34a",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ["administrator"],
+      "limits": {}
+    },
+    {
+      "name": "guest",
+      "password_hash": "Mh5oIWordBexcS1H2uQ1HsLrBvhgIAAgI6mMdS8dAvW2MwYZ",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ["administrator"],
+      "limits": {}
+    },
+    {
+      "name": "sailor",
+      "password_hash": "QbbQvUxVsay3CYBlD6v54nItllVGfwd1ejuTSxRleXiQ/43p",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": [],
+      "limits": {}
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "/"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "sailor",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "guest",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "topic_permissions": [
+    {
+      "user": "sailor",
+      "vhost": "/",
+      "exchange": "",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "parameters": [],
+  "global_parameters": [
+    {
+      "name": "internal_cluster_id",
+      "value": "rabbitmq-cluster-id-Neh4TeiNDliVDLE0-ph-Vw"
+    }
+  ],
+  "policies": [],
+  "queues": [
+    {
+      "name": "point_forecast",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "exchanges": [],
+  "bindings": []
+}

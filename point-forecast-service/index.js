@@ -20,8 +20,7 @@ dotenv.config({ path: path.resolve(process.cwd(), getDotEnvPath(process.env.NODE
 const createLogger = require('weather-service-shared');
 const logger = createLogger('point-forecast-service', process.env.LOGSTASH_PORT || 5044);
 
-const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://localhost:5672';
-logger.info(`RABBITMQ_URL: ${RABBITMQ_URL}`);
+logger.info(`RABBITMQ_URL: ${process.env.RABBITMQ_URL}`);
 
 // Define paths for marine zone shapefiles and dbf files
 // Files come from https://www.weather.gov/gis/MarineZones
@@ -225,10 +224,12 @@ async function onRequest(data, reply) {
 
 // Initialize RabbitMQ consumer for point forecast requests
 (async () => {
-  const rabbit = jackrabbit(RABBITMQ_URL);
+  const rabbit = jackrabbit(process.env.RABBITMQ_URL);
   const exchange = rabbit.default();
-  const rpc = exchange.queue({ name: 'point_forecast', prefetch: 1, durable: true });
-  rpc.consume(onRequest);
+  const rpc_point_forecast_queue = exchange.queue({ name: 'rpc_point_forecast_queue' });
+  
+  rpc_point_forecast_queue.consume(onRequest);
+  
   logger.info('Point-forecast-service is listening for messages...');
 
   process.on('uncaughtException', (err) => {

@@ -19,17 +19,26 @@ logger.info('Hello, weather-api');
 const app = express();
 app.use(express.json());
 
-const RABBITMQ_URL = process.env.RABBITMQ_URL
-logger.info(`RABBITMQ_URL: ${RABBITMQ_URL}`);
+logger.info(`RABBITMQ_URL: ${process.env.RABBITMQ_URL}`);
 
-const rabbit = jackrabbit(RABBITMQ_URL);
+// ------- RABBIT SETUP -------
+const rabbit = jackrabbit(process.env.RABBITMQ_URL);
 const exchange = rabbit.default();
-const rpc = exchange.queue({ name: 'point_forecast', prefetch: 1, durable: true });
+const rpc_point_forecast_queue = exchange.queue({ name: 'rpc_point_forecast_queue' });
+//  ---------------------------
+
+rpc_point_forecast_queue.on('ready', () => {
+  logger.info('rpc_point_forecast_queue is ready'); 
+});
+
+rpc_point_forecast_queue.on('error', (err) => {
+  logger.error(`Error in rpc_point_forecast_queue: ${err.message}`);
+});
 
 app.get('/point-forecast', async (req, res) => {
   logger.info(`[GET] /point-forecast with lat: ${req.query.lat} and lon: ${req.query.lon}`);
 
-  const pointForecastRequest = {
+  const messageData = {
     lat: parseFloat(req.query.lat),
     lon: parseFloat(req.query.lon),
   };
@@ -39,23 +48,13 @@ app.get('/point-forecast', async (req, res) => {
     logger.info(forecasts);
     res.json(forecasts);
   };
-
-  const onError = (err) => {
-    logger.error('Error in point-forecast request:', err);
-    res.status(500).json({ error: 'Failed to fetch forecast', message: err.message });
-  };
-
-  logger.info('/point-forecast - publishing point_forecast');
-  rpc.once('ready', () => {
-    exchange.publish(
-      pointForecastRequest,
-      {
-        key: 'point_forecast',
-        reply: onReply,
-      },
-      onError
-    );
+  
+  // TODO should have a timeout.  There is an example in jackrabbit
+  exchange.publish( messageData, {
+    key: 'rpc_point_forecast_queue',
+    reply: onReply,
   });
+  
 });
 
 // Start the server

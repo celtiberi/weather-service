@@ -31,8 +31,8 @@ services:
       - "5672:5672"
       - "15672:15672"
     volumes:
-      - ./rabbitmq-setup/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
-      - ./rabbitmq-setup/definitions.json:/etc/rabbitmq/definitions.json
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - ./definitions.json:/etc/rabbitmq/definitions.json
     healthcheck:
       test: rabbitmq-diagnostics check_port_connectivity
       interval: 1s
@@ -53,10 +53,10 @@ services:
       mongodb: 
         condition: service_healthy
     environment:
-      RABBITMQ_URL: amqp://admin:password@rabbitmq:5672
+      RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
       MONGODB_URI: mongodb://mongodb:27017/boats
       LOGSTASH_HOST: localhost      
-      LOGSTASH_PORT: ${LOGSTASH_PORT}
+      LOGSTASH_PORT: 5044
     networks:
       - weather
 
@@ -70,7 +70,7 @@ services:
     environment:
       RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
       LOGSTASH_HOST: localhost
-      LOGSTASH_PORT: ${LOGSTASH_PORT} 
+      LOGSTASH_PORT: 5044
     networks:
       - weather       
 
@@ -81,6 +81,8 @@ services:
     ports:
       - "3200:3100"
     depends_on:
+      point-forecast-service:
+        condition: service_started
       rabbitmq:
         condition: service_healthy
       mongodb: 
@@ -89,7 +91,7 @@ services:
       RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
       MONGODB_URI: mongodb://mongodb:27017/boats
       LOGSTASH_HOST: localhost      
-      LOGSTASH_PORT: ${LOGSTASH_PORT}
+      LOGSTASH_PORT: 5044
     networks:
       - weather
 
@@ -108,9 +110,9 @@ services:
         condition: service_healthy
     environment:
       MONGODB_URI: mongodb://mongodb:27017/boats
-      RABBITMQ_URL: amqp://admin:password@rabbitmq:5672
+      RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
       LOGSTASH_HOST: localhost
-      LOGSTASH_PORT: ${LOGSTASH_PORT} 
+      LOGSTASH_PORT: 5044
     networks:
       - weather
   
