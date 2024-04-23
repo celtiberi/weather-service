@@ -3,9 +3,17 @@ version: '3'
 # TODO grafana is running on port 3000 which is annoying.  See if that can be changed
 include:
   - docker-elk/docker-compose.yml
-  - apisix-docker/example/docker-compose.yml  # when this is pushed to the cloud it will need to be changed for the different architecture
+
 
 services:
+  krakend:
+    image: devopsfaith/krakend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./krakend.json:/etc/krakend/krakend.json
+    networks:
+      - weather
 
   mongodb:
     image: mongo
@@ -79,7 +87,7 @@ services:
     container_name: weather-api
     restart: always
     ports:
-      - "3200:3100"
+      - "3100:3100"
     depends_on:
       point-forecast-service:
         condition: service_started

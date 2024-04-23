@@ -15,7 +15,7 @@ The application is composed of the following services:
 7. **elasticsearch**: An Elasticsearch cluster for storing and searching log data.
 8. **logstash**: A Logstash service for collecting and processing log data.
 9. **kibana**: A Kibana dashboard for visualizing and analyzing log data.
-10. **apisix**: An API gateway for managing and securing the application's APIs.
+10. **krakend**: An API gateway for managing and securing the application's APIs.
 11. **grafana**: A Grafana dashboard for monitoring and visualizing application metrics.
 
 ## Prerequisites
@@ -28,37 +28,45 @@ Before running the application, make sure you have the following installed on yo
 ## Getting Started
 
 1. Clone the repository:
-git clone https://github.com/celtiberi/weather-service.git
+   ```sh
+   git clone https://github.com/celtiberi/weather-service.git
+   ```
 2. Navigate to the project directory:
-cd weather-service
-3. Get docker api-six and elk :
-   
-```sh
-git clone https://github.com/apache/apisix-docker.git
-git clone https://github.com/deviantony/docker-elk.git
-```
+   ```sh
+   cd weather-service
+   ```
+3. Get docker elk :
+   ```sh
+   git clone https://github.com/deviantony/docker-elk.git
+   ```
 3. Build and start the services:
-```sh
-make build
-make up
-```
-This command will build the necessary Docker images and start the services in detached mode.
+   ```sh
+   make build
+   make up
+   ```
+   This command will build the necessary Docker images and start the services in detached mode.
 
 5. Access the services:
 
-- MongoDB: `localhost:27017`
-- RabbitMQ Management: `localhost:15672`
-- Boat API: `localhost:3050`
-- Weather API: `localhost:3200`
-- Grib Downloader (debug port): `localhost:9231`
-- Elasticsearch: `localhost:9200`
-- Kibana: `localhost:5601`
-- Grafana: `localhost:3000`
+   - MongoDB: `localhost:27017`
+   - RabbitMQ Management: `localhost:15672`
+   - Boat API: `localhost:3050`
+   - Weather API: `localhost:3100`
+   - Grib Downloader (debug port): `localhost:9231`
+   - Elasticsearch: `localhost:9200`
+   - Kibana: `localhost:5601`
+   - Grafana: `localhost:3000`
 
-5. To stop the services, run:
-```sh
-make down
-```
+6. Reach the point-forecast using the KrakenD API Gateway:
+   ```sh
+   curl http://localhost:8080/v1/point-forecast/14.350/-77.476
+   ```
+
+7. To stop the services, run:
+   ```sh
+   make down
+   ```
+
 ## Configuration
 
 The application can be configured using the following files:
