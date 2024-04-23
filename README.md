@@ -18,6 +18,7 @@ The application is composed of the following services:
 10. **krakend**: An API gateway for managing and securing the application's APIs.
 11. **grafana**: A Grafana dashboard for monitoring and visualizing application metrics.
 
+
 ## Prerequisites
 
 Before running the application, make sure you have the following installed on your system:
@@ -73,8 +74,8 @@ The application can be configured using the following files:
 
 - `rabbitmq.conf`: RabbitMQ configuration file.
 - `definitions.json`: RabbitMQ definitions file.
+- `krakend.json`: Endpoints and security are configured in this file.
 - Environment variables for each service can be set in the `docker-compose.yml` file.
-
 ## Volumes
 
 The application uses the following Docker volumes for data persistence:
