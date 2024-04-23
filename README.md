@@ -22,8 +22,8 @@ The application is composed of the following services:
 
 Before running the application, make sure you have the following installed on your system:
 
-- Docker
-- Docker Compose
+- Docker Desktop
+- Kubernetes (enabled in Docker Desktop)
 
 ## Getting Started
 
