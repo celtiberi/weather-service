@@ -61,7 +61,7 @@ jobs:
           username: ${{ secrets.VM_SSH_USER }}
           key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
           script: |
-            cd /weather-service
+            cd /home/ubuntu/weather-service
             git pull origin main
             docker-compose pull
             docker-compose up -d
