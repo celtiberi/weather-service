@@ -59,9 +59,8 @@ jobs:
           SSH_HOST: ${{ secrets.VM_SSH_HOST }}
           SSH_PRIVATE_KEY: ${{ secrets.VM_SSH_PRIVATE_KEY }}
         run: |
-          ssh -o StrictHostKeyChecking=no -i <(echo "$SSH_PRIVATE_KEY") ${SSH_USER}@${SSH_HOST} '
-            mkdir -p /path/to/your/project
-            cd /path/to/your/project
+          ssh -o StrictHostKeyChecking=no -i <(echo "$SSH_PRIVATE_KEY") ${SSH_USER}@${SSH_HOST} '            
+            cd /weather-service
             git pull origin main
             docker-compose pull
             docker-compose up -d
