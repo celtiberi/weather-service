@@ -22,10 +22,18 @@ jobs:
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       -
-        name: Build and push
+        name: Build and push (weather-api)
         uses: docker/build-push-action@v5
         with:
           context: ./weather-api
           file: ./weather-api/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/weather-api:latest
+      -
+        name: Build and push (point-forecast-service)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./point-forecast-service
+          file: ./point-forecast-service/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/weather-api:latest
