@@ -53,3 +53,16 @@ jobs:
           file: ./grib-downloader/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/grib-downloader:latest
+      - name: Deploy to VM
+        env:
+          SSH_USER: ${{ secrets.VM_SSH_USER }}
+          SSH_HOST: ${{ secrets.VM_SSH_HOST }}
+          SSH_PRIVATE_KEY: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+        run: |
+          ssh -o StrictHostKeyChecking=no -i <(echo "$SSH_PRIVATE_KEY") ${SSH_USER}@${SSH_HOST} '
+            mkdir -p /path/to/your/project
+            cd /path/to/your/project
+            git pull origin main
+            docker-compose pull
+            docker-compose up -d
+          '
