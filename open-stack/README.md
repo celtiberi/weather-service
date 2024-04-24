@@ -113,18 +113,4 @@
    ```
    This command will pull the images from Docker Hub and start the containers.
 
-## Step 6: Modify your Kubernetes deployment files to pull images from the container registry.
 
-1. Update the image field in your Kubernetes deployment files to point to the registry URL.
-
-## Step 7: Deploy your application using the modified Kubernetes deployment files.
-
-1. Apply your Kubernetes deployment files to deploy your application.
-
-## Step 8: Configure networking and expose your services.
-
-1. Expose your services using Kubernetes services.
-
-## Step 9: Monitor and manage your application on the OpenStack cloud platform.
-
-1. Use Kubernetes tools to monitor and manage your application.
