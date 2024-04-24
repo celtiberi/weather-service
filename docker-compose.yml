@@ -1,11 +1,16 @@
-version: '3'
-
-# TODO grafana is running on port 3000 which is annoying.  See if that can be changed
-include:
-  - docker-elk/docker-compose.yml
+version: '3.3'
 
 
 services:
+  elk:
+    image: sebp/elk
+    ports:
+      - "5601:5601"
+      - "9200:9200"
+      - "5044:5044"
+    networks:
+        - weather
+
   krakend:
     image: devopsfaith/krakend
     ports:
@@ -50,7 +55,7 @@ services:
       - weather
 
   boat-api:
-    build: ./boat-api
+    image: docker.io/celtiberi/boat-api:latest
     container_name: boat-api
     restart: always
     ports:
@@ -69,6 +74,7 @@ services:
       - weather
 
   point-forecast-service:
+    image: docker.io/celtiberi/point-forecast-service:latest
     build: ./point-forecast-service
     container_name: point-forecast-service
     restart: always
@@ -83,6 +89,7 @@ services:
       - weather       
 
   weather-api:
+    image: docker.io/celtiberi/weather-api:latest
     build: ./weather-api
     container_name: weather-api
     restart: always
@@ -104,6 +111,7 @@ services:
       - weather
 
   grib-downloader:
+    image: docker.io/celtiberi/grib-downloader:latest
     build: ./grib-downloader
     container_name: grib-downloader
     restart: always

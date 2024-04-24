@@ -98,3 +98,8 @@ The services communicate with each other through a Docker bridge network named `
 
 - Change the port on which Grafana is running (currently 3000) to avoid conflicts.
 - Adjust the architecture when pushing the application to the cloud.
+
+
+## Setting up the containers on the cloud VM
+
+For setting up the containers on the cloud VM, please refer to the [OpenStack README](open-stack/README.md).
