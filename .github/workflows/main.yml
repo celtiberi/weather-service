@@ -36,4 +36,20 @@ jobs:
           context: ./point-forecast-service
           file: ./point-forecast-service/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/weather-api:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/point-forecast-service:latest
+      -
+        name: Build and push (boat-api)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./boat-api
+          file: ./boat-api/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/boat-api:latest
+      -
+        name: Build and push (grib-downloader)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./grib-downloader
+          file: ./grib-downloader/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/grib-downloader:latest
