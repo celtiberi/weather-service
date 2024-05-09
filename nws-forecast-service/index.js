@@ -32,13 +32,14 @@ const exchange = rabbit.direct('nws_forecast_update');
 
 async function saveForecast(zone, zoneType, forecastText) {
   try {
-    const expirationTime = nws.getForecastExpirationTime(forecastText);
+    const timeZone = await nws.getLocalTimeForZone(zone['ID'], zoneType);
+    const expirationTime = nws.getForecastExpirationTime(forecastText, timeZone);
 
     const forecast = new nws.Forecast({
       zoneId: zone['ID'],
       zoneType: zoneType,
       forecast: forecastText,
-      //expiresAt: expirationTime,
+      timeZone: timeZone,
       expires: expirationTime // purposfully not using expiresAt.  We need to control deleting the document ourselves. 
     });
 
@@ -55,7 +56,7 @@ async function updateExpiredForecasts() {
     for (const forecast of expiredForecasts) {
       const newForecast = await fetchForecast(forecast.zoneId, forecast.zoneType);
       forecast.forecast = newForecast;
-      forecast.expires = nws.getForecastExpirationTime(newForecast);
+      forecast.expires = nws.getForecastExpirationTime(newForecast, forecast.timeZone);
       await forecast.save();
       logger.info(`Forecast for zone ${forecast.zoneId} updated successfully`);
     }
@@ -197,7 +198,7 @@ async function initializeApp() {
     fetchAndSaveAllForecasts();
 
     setInterval(updateExpiredForecasts, 5 * 60 * 1000);
-    
+
     logger.info('Application initialized successfully');
   } catch (error) {
     logger.error('Error initializing application:', error);

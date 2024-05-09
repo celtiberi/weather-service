@@ -3,7 +3,8 @@ const turf = require('@turf/turf');
 const path = require('path');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-
+const tzlookup = require("tz-lookup");
+const moment = require('moment-timezone');
 
 const getDotEnvPath = (env) => {
   if (env === 'TEST') {
@@ -45,6 +46,10 @@ const forecastSchema = new mongoose.Schema({
     required: true,
   },
   forecast: {
+    type: String,
+    required: true,
+  },
+  timeZone: {
     type: String,
     required: true,
   },
@@ -224,42 +229,47 @@ async function getPointForecasts(lat, lon) {
   };
 }
 
+async function getLocalTimeForZone(zoneId, zoneType) {
+  let geojsonPromise;
+  if (zoneType === 'coastal') {
+    geojsonPromise = coastalGeojsonPromise;
+  } else if (zoneType === 'offshore') {
+    geojsonPromise = offshoreGeojsonPromise;
+  } else if (zoneType === 'high_seas') {
+    geojsonPromise = highSeasGeojsonPromise;  
+  }
+  
+  let geojson = await geojsonPromise;
 
-function getForecastExpirationTime(forecast) {
-  let issuedAt = new Date();
-  let expiresAt = new Date(issuedAt);
-  expiresAt.setHours(expiresAt.getHours() + 6); // Default expiry time of 6 hours
+  const zoneFeature = geojson.features.find(feature => feature.properties["ID"] === zoneId);
+  const zoneCenter = turf.center(zoneFeature);
+  const zoneCenterCoords = zoneCenter.geometry.coordinates;
+  const zoneCenterLat = zoneCenterCoords[1];
+  const zoneCenterLon = zoneCenterCoords[0];
+  const timeZone = tzlookup(zoneCenterLat, zoneCenterLon);
 
-  const issuedAtMatch = forecast.match(
-    /(?<time>\d{4})\s+UTC\s+(?<dayOfWeek>\w{3})\s+(?<month>\w{3})\s+(?<day>\d{1,2})\s+(?<year>\d{4})/
-  );
+  return timeZone;
+}
 
+// timeZone will be somethign like "America/Nassau"
+function getForecastExpirationTime(forecast, timeZone) {
+  let issuedAt = moment().tz(timeZone);
+  let expiresAt = moment(issuedAt).add(6, 'hours');
+
+  const issuedAtMatch = forecast.match(/(?<time>\d{4})\s+UTC\s+(?<dayOfWeek>\w{3})\s+(?<month>\w{3})\s+(?<day>\d{1,2})\s+(?<year>\d{4})/);
   if (issuedAtMatch) {
     const { time, dayOfWeek, month, day, year } = issuedAtMatch.groups;
-    // Extract hours and minutes from the time string
     const [hours, minutes] = time.match(/(\d{2})(\d{2})/).slice(1);
-
-    // Create a date string in a format recognized by Date.parse()
-    const parsableDate = `${dayOfWeek}, ${day} ${month} ${year} ${hours}:${minutes}:00 UTC`;
-
-    // Create a new Date object
-    const issuedAt = new Date(Date.parse(parsableDate));
-
-    expiresAt = new Date(issuedAt);
-    expiresAt.setHours(expiresAt.getHours() + 6); // Default expiry time of 6 hours
+    issuedAt = moment.tz(`${year}-${month}-${day} ${hours}:${minutes}`, 'YYYY-MMM-DD HH:mm', 'UTC').tz(timeZone);
+    expiresAt = moment(issuedAt).add(6, 'hours');
   } else {
-    console.log(
-      'Issue time not found in the forecast. Using current time as default.'
-    );
+    console.log('Issue time not found in the forecast. Using current time as default.');
   }
 
-  const expiresInMatch = forecast.match(
-    /SUPERSEDED BY NEXT ISSUANCE IN (\d+) HOURS/
-  );
+  const expiresInMatch = forecast.match(/SUPERSEDED BY NEXT ISSUANCE IN (\d+) HOURS/);
   if (expiresInMatch) {
     const expiresInHours = parseInt(expiresInMatch[1]);
-    expiresAt = new Date(issuedAt);
-    expiresAt.setHours(expiresAt.getHours() + expiresInHours);
+    expiresAt = moment(issuedAt).add(expiresInHours, 'hours');
   } else {
     const expiresAtMatch = forecast.match(/Expires:(\d{12})/);
     if (expiresAtMatch) {
@@ -270,40 +280,27 @@ function getForecastExpirationTime(forecast) {
       const expiresAtHour = parseInt(expiresAtString.slice(8, 10));
       const expiresAtMinute = parseInt(expiresAtString.slice(10, 12));
       console.log(`Expiry time: ${expiresAtYear}-${expiresAtMonth + 1}-${expiresAtDay} ${expiresAtHour}:${expiresAtMinute}`);
-      expiresAt = new Date(
-          expiresAtYear,
-          expiresAtMonth,
-          expiresAtDay,
-          expiresAtHour,
-          expiresAtMinute
-      );
+      expiresAt = moment.tz(`${expiresAtYear}-${expiresAtMonth + 1}-${expiresAtDay} ${expiresAtHour}:${expiresAtMinute}`, 'YYYY-M-D HH:mm', timeZone);
     } else {
-      console.log(
-        'Expiry time not found in the forecast. Using default expiry time of 6 hours.'
-      );
+      console.log('Expiry time not found in the forecast. Using default expiry time of 6 hours.');
     }
   }
 
-  if (!issuedAt || !expiresAt) {
-    throw new Error(
-      `issuedAt: ${issuedAt}, expiresAt: ${expiresAt}, forecast: ${forecast}`
-    );
+  if (!issuedAt.isValid() || !expiresAt.isValid()) {
+    throw new Error(`issuedAt: ${issuedAt}, expiresAt: ${expiresAt}, forecast: ${forecast}`);
   }
-  let now = new Date()
-  
-  // TODO maybe this check should be done at a higher level?  WOuld probaably make more sense
-  if (expiresAt < issuedAt || (now - expiresAt) > 24 * 60 * 60 * 1000) {
-    // This is a stale forecast.  It may not be updated again for quite a while
-    // There is no reason to store this forecast in the database
-    
+
+  const now = moment().tz(timeZone);
+  if (expiresAt.isBefore(issuedAt) || now.diff(expiresAt, 'milliseconds') > 24 * 60 * 60 * 1000) {
     throw new Error('Stale forecast. This forecast should be ignored.');
   }
 
-  return expiresAt;
+  return expiresAt.toDate();
 }
 
 module.exports = {
   mongooseConnectionPromise,
+  getLocalTimeForZone,
   getMarineZones,
   getMarineZonesByGPS,
   getPointForecasts,

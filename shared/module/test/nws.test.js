@@ -48,6 +48,13 @@ describe('NWS Module', function() {
     await Forecast.deleteMany({});
   });
 
+  it('should return local time for a given marine zone', async function() {
+    const zoneId = 'AMZ671'; // Example zone ID
+    const zoneType = 'coastal'; // Example zone type
+    const localTime = await nws.getLocalTimeForZone(zoneId, zoneType);
+    expect(localTime).to.equal("America/Nassau");
+  });
+
   // Was testing to see if we could get the full document when a delete occured.  It is not for sure.  
   // it('should know when a document is expired from the mongoDB', async (done) => {
   //   let connection = await nws.mongooseConnectionPromise;

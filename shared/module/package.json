@@ -4,9 +4,11 @@
   "dependencies": {
     "@turf/turf": "^6.5.0",
     "dotenv": "^16.4.5",
+    "moment-timezone": "^0.5.45",
     "mongoose": "^8.3.3",
     "path": "^0.12.7",
     "shapefile": "^0.6.6",
+    "tz-lookup": "^6.1.25",
     "winston": "^3.13.0",
     "winston-logstash-transport": "^2.0.0"
   },
