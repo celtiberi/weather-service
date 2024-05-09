@@ -1,5 +1,6 @@
 docker-elk/
 apisix-docker/
+.env*
 
 .DS_Store
 

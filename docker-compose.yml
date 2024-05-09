@@ -92,6 +92,8 @@ services:
       MONGODB_URI: mongodb+srv://admin:ay5HG8TYzT0MMsTx@cluster0.ml7brdd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
       LOGSTASH_HOST: localhost
       LOGSTASH_PORT: 5044
+    volumes:
+      - ./shared:/app/../shared
     networks:
       - weather
 
@@ -120,12 +122,6 @@ volumes:
   rabbitmq_data:
   grib_data:
   grafana_data:
-  mongo1_data:
-  mongo2_data:
-  mongo3_data:
-  mongo1_config:
-  mongo2_config:
-  mongo3_config:
 
 networks:
   mongo-network:

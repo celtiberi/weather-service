@@ -1,7 +1,7 @@
 FROM node:21.7.2
 
 # Set the working directory in the container
-WORKDIR /usr/src/app
+WORKDIR /app
 
 # Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
@@ -16,4 +16,4 @@ COPY . .
 EXPOSE 3100
 
 # Start the server
-CMD ["node", "server.js"]
+CMD ["node", "index.js"]

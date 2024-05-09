@@ -123,39 +123,47 @@ const highSeasGeojsonPromise = shapefile
   .read(highSeasMarineZonesShapeFile, highSeasMarineZonesDbfFile)
   .catch(handleShapefileError);
 
+// TODO marineZones will not change so no reason to not cache it after the first call.  Should prob cache when the file loads
+let marineZones = null;
 async function getMarineZones() {
-  return  await Promise.all([
-    coastalGeojsonPromise,
-    offshoreGeojsonPromise,
-    highSeasGeojsonPromise,
-  ]).then(([coastalGeojson, offshoreGeojson, highSeasGeojson]) => {
-    let coastalZones = {};
-    coastalGeojson.features.forEach((feature) => {
-      coastalZones[feature.properties['ID']] = feature.properties;
-    });
+  if (marineZones) {
+    return marineZones;
+  } else {
+    return  await Promise.all([
+      coastalGeojsonPromise,
+      offshoreGeojsonPromise,
+      highSeasGeojsonPromise,
+    ]).then(([coastalGeojson, offshoreGeojson, highSeasGeojson]) => {
+      let coastalZones = {};
+      coastalGeojson.features.forEach((feature) => {
+        coastalZones[feature.properties['ID']] = feature.properties;
+      });
 
-    let offshoreZones = {};
-    offshoreGeojson.features.forEach((feature) => {
-      offshoreZones[feature.properties['ID']] = feature.properties;
-    });
+      let offshoreZones = {};
+      offshoreGeojson.features.forEach((feature) => {
+        offshoreZones[feature.properties['ID']] = feature.properties;
+      });
 
-    let highSeasZones = {};
-    highSeasGeojson.features.forEach((feature) => {
-      // for some stupid reason the highseas zones do not have an ID.  Stupid
-      highSeasZones[feature.properties['NAME']] = feature.properties;
-      highSeasZones[feature.properties['NAME']]['ID'] =
-        feature.properties['NAME'];
-    });
+      let highSeasZones = {};
+      highSeasGeojson.features.forEach((feature) => {
+        // for some stupid reason the highseas zones do not have an ID.  Stupid
+        highSeasZones[feature.properties['NAME']] = feature.properties;
+        highSeasZones[feature.properties['NAME']]['ID'] =
+          feature.properties['NAME'];
+      });
 
-    return {
-      coastal: coastalZones,
-      offshore: offshoreZones,
-      high_seas: highSeasZones,
-    };
-  }).catch((error) => {
-    console.error('Error getting marine zones:', error);
-    throw error;
-  });
+      marineZones = {
+        coastal: coastalZones,
+        offshore: offshoreZones,
+        high_seas: highSeasZones,
+      };
+
+      return marineZones;
+    }).catch((error) => {
+      console.error('Error getting marine zones:', error);
+      throw error;
+    });
+  }
 }
 
 // Identify marine zone based on latitude and longitude
@@ -189,38 +197,22 @@ async function getMarineZonesByGPS(lat, lon) {
 }
 
 async function getPointForecasts(lat, lon) {
-  const zones = await getMarineZones(lat, lon);
+  const zones = await getMarineZonesByGPS(lat, lon);
   let coastalForecast = null;
   let offshoreForecast = null;
   let highSeasForecast = null;
 
-  if (zones.coastal) {
-    const forecast = await Forecast.findOne({ zoneId: zones.coastal.id });
-    if (forecast) {
-      coastalForecast = forecast.forecast;
-    } else {
-      throw new Error('No forecast found for the coastal zone');
+  const findForecast = async (zone, id) => {
+    if (!zones[zone]) {
+      return null;
     }
-  }
-  npm;
-
-  if (zones.offshore) {
-    const forecast = await Forecast.findOne({ zoneId: zones.offshore.id });
-    if (forecast) {
-      offshoreForecast = forecast.forecast;
-    } else {
-      throw new Error('No forecast found for the offshore zone');
-    }
+    const result = await Forecast.findOne({ zoneId: zones[zone][id] });
+    return result ? result.toObject() : null;
   }
 
-  if (zones.high_seas) {
-    const forecast = await Forecast.findOne({ zoneId: zones.high_seas.name });
-    if (forecast) {
-      highSeasForecast = forecast.forecast;
-    } else {
-      throw new Error('No forecast found for the high seas zone');
-    }
-  }
+  coastalForecast = await findForecast('coastal', 'ID');
+  offshoreForecast = await findForecast('offshore', 'ID');
+  highSeasForecast = await findForecast('high_seas', 'NAME');
 
   return {
     coastal: coastalForecast,

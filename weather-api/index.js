@@ -1,5 +1,4 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const jackrabbit = require('@pager/jackrabbit');
 const path = require('path');
 const { createLogger, nws } = require('../shared/module');
@@ -22,22 +21,29 @@ app.use(express.json());
 logger.info(`RABBITMQ_URL: ${process.env.RABBITMQ_URL}`);
 
 // ------- RABBIT SETUP -------
+// TODO not sure I need this here.  Maybe just in the push notification code when I make it?
+// When I am track a boats waypoints I will need it in that code as well.
 const rabbit = jackrabbit(process.env.RABBITMQ_URL);
 var exchange = rabbit.default();
 var forecastUpdate = exchange.queue({ name: 'forecast_update' });
 //  ---------------------------
 
 app.get('/point-forecast', async (req, res) => {
-  logger.info(`[GET] /point-forecast with lat: ${req.query.lat} and lon: ${req.query.lon}`);
+  try {
+    logger.info(`[GET] /point-forecast with lat: ${req.query.lat} and lon: ${req.query.lon}`);
 
-  const coordinate = {
-    lat: parseFloat(req.query.lat),
-    lon: parseFloat(req.query.lon),
-  };
+    const coordinate = {
+      lat: parseFloat(req.query.lat),
+      lon: parseFloat(req.query.lon),
+    };
 
-  let forecasts = await nws.getPointForecasts(coordinate.lat, coordinate.lon)
+    let forecasts = await nws.getPointForecasts(coordinate.lat, coordinate.lon)
 
-  res.json(forecasts);
+    res.json(forecasts);
+  } catch (error) {
+    logger.error(`Error fetching point forecasts: ${error.message}`);
+    res.status(500).send(error.message);
+  }
 });
 
 // Start the server
