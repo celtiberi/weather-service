@@ -11,18 +11,18 @@
             "type": "node"
         },
         {
-            "name": "Debug Chai Tests - point-forecast-service",
+            "name": "Debug Chai Tests - nws-forecast-service",
             "type": "node",
             "request": "launch",
             "runtimeArgs": [
                 "--inspect-brk=9229",
-                "${workspaceFolder}/point-forecast-service/node_modules/.bin/mocha",
+                "${workspaceFolder}/nws-forecast-service/node_modules/.bin/mocha",
                 "--runInBand"
             ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen",
             "timeout": 30000,
-            "cwd": "${workspaceFolder}/point-forecast-service",
+            "cwd": "${workspaceFolder}/nws-forecast-service",
             "env": {
                 "NODE_ENV": "test"
             },
@@ -32,10 +32,10 @@
         },
 
         {
-            "name": "Debug point-forecast-service",
+            "name": "Debug nws-forecast-service",
             "type": "node",
             "request": "launch",
-            "program": "${workspaceFolder}/point-forecast-service/index.js",
+            "program": "${workspaceFolder}/nws-forecast-service/index.js",
             "env": {
                 "DEBUG": "true",
                 "RABBITMQ_URL": "amqp://admin:password@localhost:5672"

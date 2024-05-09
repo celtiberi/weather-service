@@ -9,7 +9,7 @@ The application is composed of the following services:
 1. **mongodb**: A MongoDB database for storing boat and weather data.
 2. **rabbitmq**: A RabbitMQ message broker for communication between services.
 3. **boat-api**: An API service for managing boat-related data.
-4. **point-forecast-service**: A service for generating point forecasts.
+4. **nws-forecast-service**: A service for gathering NWS weather forecast.
 5. **weather-api**: An API service for retrieving weather information.
 6. **grib-downloader**: A service for downloading GRIB (GRIdded Binary) weather data files.
 7. **elasticsearch**: An Elasticsearch cluster for storing and searching log data.

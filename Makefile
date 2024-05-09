@@ -1,5 +1,5 @@
 # Variables
-DOCKER_COMPOSE = docker-compose
+DOCKER_COMPOSE = docker compose
 
 # Targets
 .PHONY: build up down logs restart clean

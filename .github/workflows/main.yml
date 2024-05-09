@@ -30,13 +30,13 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/weather-api:latest
       -
-        name: Build and push (point-forecast-service)
+        name: Build and push (nws-forecast-service)
         uses: docker/build-push-action@v5
         with:
-          context: ./point-forecast-service
-          file: ./point-forecast-service/Dockerfile
+          context: ./nws-forecast-service
+          file: ./nws-forecast-service/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/point-forecast-service:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/nws-forecast-service:latest
       -
         name: Build and push (boat-api)
         uses: docker/build-push-action@v5

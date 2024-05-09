@@ -1,4 +1,5 @@
 services:
+
   elk:
     image: sebp/elk
     ports:
@@ -14,22 +15,6 @@ services:
       - "8080:8080"
     volumes:
       - ./krakend.json:/etc/krakend/krakend.json
-    networks:
-      - weather
-
-  mongodb:
-    image: mongo
-    container_name: mongodb
-    restart: always
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
-    healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
-      interval: 30s
-      timeout: 10s
-      retries: 5
     networks:
       - weather
 
@@ -62,29 +47,30 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-      mongodb:
-        condition: service_healthy
     environment:
       RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
-      MONGODB_URI: mongodb://mongodb:27017/boats
+      MONGODB_URI: mongodb+srv://admin:ay5HG8TYzT0MMsTx@cluster0.ml7brdd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
       LOGSTASH_HOST: localhost
       LOGSTASH_PORT: 5044
     networks:
       - weather
 
-  point-forecast-service:
+  nws-forecast-service:
     build: 
-      context: ./point-forecast-service
-    image: docker.io/celtiberi/point-forecast-service:latest
-    container_name: point-forecast-service
+      context: ./nws-forecast-service
+    image: docker.io/celtiberi/nws-forecast-service:latest
+    container_name: nws-forecast-service
     restart: always
     depends_on:
       rabbitmq:
         condition: service_healthy
     environment:
       RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
+      MONGODB_URI: mongodb+srv://admin:ay5HG8TYzT0MMsTx@cluster0.ml7brdd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
       LOGSTASH_HOST: localhost
       LOGSTASH_PORT: 5044
+    volumes:
+      - ./shared:/app/../shared
     networks:
       - weather
 
@@ -97,15 +83,13 @@ services:
     ports:
       - "3100:3100"
     depends_on:
-      point-forecast-service:
+      nws-forecast-service:
         condition: service_started
       rabbitmq:
         condition: service_healthy
-      mongodb:
-        condition: service_healthy
     environment:
       RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
-      MONGODB_URI: mongodb://mongodb:27017/boats
+      MONGODB_URI: mongodb+srv://admin:ay5HG8TYzT0MMsTx@cluster0.ml7brdd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
       LOGSTASH_HOST: localhost
       LOGSTASH_PORT: 5044
     networks:
@@ -124,22 +108,33 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-      mongodb:
-        condition: service_healthy
     environment:
-      MONGODB_URI: mongodb://mongodb:27017/boats
+      MONGODB_URI: mongodb+srv://admin:ay5HG8TYzT0MMsTx@cluster0.ml7brdd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
       RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
       LOGSTASH_HOST: localhost
       LOGSTASH_PORT: 5044
     networks:
       - weather
 
-volumes:
-  mongodb_data:
+volumes:  
   rabbitmq_data:
   grib_data:
   grafana_data:
+  mongo1_data:
+  mongo2_data:
+  mongo3_data:
+  mongo1_config:
+  mongo2_config:
+  mongo3_config:
 
 networks:
+  mongo-network:
+    name: mongo-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.254
   weather:
     driver: bridge
+  
