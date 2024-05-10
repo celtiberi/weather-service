@@ -1,20 +1,51 @@
 {
-    "$schema": "https://www.krakend.io/schema/v2.6/krakend.json",
-    "version": 3,
-    "endpoints": [
+  "$schema": "https://www.krakend.io/schema/v2.6/krakend.json",
+  "version": 3,
+  "endpoints": [
+    {
+      "endpoint": "/v1/point-forecast/{lat}/{lon}",
+      "method": "GET",
+      "backend": [
         {
-          "endpoint": "/v1/point-forecast/{lat}/{lon}",
+          "url_pattern": "/point-forecast?lat={lat}&lon={lon}",
           "method": "GET",
-          "backend": [
-            {
-              "url_pattern": "/point-forecast?lat={lat}&lon={lon}",
-              "method": "GET",                    
-              "host": [
-                "weather-api:3100"
-              ]
-            }
-          ]
+          "host": ["weather-api:3100"]
         }
-      ],
-    "extra_config": {}
+      ]
+    },
+    {
+      "endpoint": "/v1/boats",
+      "method": "POST",
+      "backend": [
+        {
+          "url_pattern": "/boats",
+          "method": "POST",
+          "host": ["boat-api:3000"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/v1/boats/{boatId}/waypoints",
+      "method": "PUT",
+      "backend": [
+        {
+          "url_pattern": "/boats/{boatId}/waypoints",
+          "method": "PUT",
+          "host": ["boat-api:3000"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/v1/boats/{boatId}/location",
+      "method": "PUT",
+      "backend": [
+        {
+          "url_pattern": "/boats/{boatId}/location",
+          "method": "PUT",
+          "host": ["boat-api:3000"]
+        }
+      ]
+    }
+  ],
+  "extra_config": {}
 }

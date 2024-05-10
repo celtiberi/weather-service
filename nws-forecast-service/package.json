@@ -4,8 +4,7 @@
   "main": "index.js",
   "devDependencies": {
     "@pager/semantic-release-config": "2.x",
-    "chai": "^4.4.1",
-    "dotenv": "^16.3.1",
+    "chai": "^4.4.1",    
     "eslint": "7.x",
     "eslint-config-hapi": "12.x",
     "eslint-plugin-hapi": "4.x",
@@ -31,7 +30,8 @@
     "shapefile": "^0.6.6",
     "tz-lookup": "^6.1.25",
     "url": "^0.11.3",
-    "weather-service-logger": "latest"
+    "weather-service-logger": "latest",
+    "dotenv": "^16.3.1"
   },
   "scripts": {
     "start": "node index.js",

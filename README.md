@@ -2,6 +2,11 @@
 
 This is a dockerized weather application that consists of several microservices working together to provide weather information and forecasting capabilities.
 
+## TODO
+
+1. **MongoDB**: The current setup has no restrictions on what IPs can connect to the Atlas cloud instance. For production, a MongoDB instance with a whitelisted IP is needed.
+2. **Kraken**: Get Kraken running on the VM.
+
 ## Services
 
 The application is composed of the following services:

@@ -52,6 +52,8 @@ services:
       MONGODB_URI: mongodb+srv://admin:ay5HG8TYzT0MMsTx@cluster0.ml7brdd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
       LOGSTASH_HOST: localhost
       LOGSTASH_PORT: 5044
+    volumes:
+      - ./shared:/app/../shared
     networks:
       - weather
 

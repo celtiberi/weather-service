@@ -38,7 +38,7 @@ app.get('/point-forecast', async (req, res) => {
     };
 
     let forecasts = await nws.getPointForecasts(coordinate.lat, coordinate.lon)
-
+    
     res.json(forecasts);
   } catch (error) {
     logger.error(`Error fetching point forecasts: ${error.message}`);

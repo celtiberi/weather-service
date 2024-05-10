@@ -3,11 +3,17 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "debug": "node --inspect=0.0.0.0:9229 index.js"
+    "start": "node index.js",
+    "debug": "NODE_ENV=test node --inspect=0.0.0.0:9229 index.js"
   },
   "dependencies": {
+    "@pager/jackrabbit": "^5.5.0",
+    "dot-env": "^0.0.1",
+    "dotenv": "^16.4.5",
     "express": "^4.17.1",
+    "express-fileupload": "^1.5.0",
+    "gpx-parse": "^0.10.4",
+    "moment": "^2.30.1",
     "mongoose": "^5.12.9",
     "weather-service-logger": "latest"
   }

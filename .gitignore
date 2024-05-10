@@ -1,7 +1,7 @@
 docker-elk/
 apisix-docker/
 .env*
-
+**/newrelic_agent.log
 .DS_Store
 
 # Logs
