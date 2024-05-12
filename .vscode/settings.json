@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./weather-routing-service/libweatherrouting"
+    ]
+}

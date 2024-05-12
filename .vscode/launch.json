@@ -1,60 +1,15 @@
 {
-    "configurations": [
-        
-        {
-            "name": "Attach",
-            "port": 9229,
-            "request": "attach",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "type": "node"
-        },
-        {
-            "name": "Debug Chai Tests - nws-forecast-service",
-            "type": "node",
-            "request": "launch",
-            "runtimeArgs": [
-                "--inspect-brk=9229",
-                "${workspaceFolder}/nws-forecast-service/node_modules/.bin/mocha",
-                "--runInBand"
-            ],
-            "console": "integratedTerminal",
-            "internalConsoleOptions": "neverOpen",
-            "timeout": 30000,
-            "cwd": "${workspaceFolder}/nws-forecast-service",
-            "env": {
-                "NODE_ENV": "test"
-            },
-            "skipFiles": [
-                "<node_internals>/**"
-            ]
-        },
-
-        {
-            "name": "Debug nws-forecast-service",
-            "type": "node",
-            "request": "launch",
-            "program": "${workspaceFolder}/nws-forecast-service/index.js",
-            "env": {
-                "DEBUG": "true",
-                "RABBITMQ_URL": "amqp://admin:password@localhost:5672"
-            },
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Docker Node.js Launch - grib-downloader",
-            "type": "docker",
-            "request": "launch",
-            "preLaunchTask": "docker-run: debug",
-            "platform": "node",
-            "node": {
-                "package": "${workspaceFolder}/grib-downloader/package.json",
-                "localRoot": "${workspaceFolder}/grib-downloader",
-                "remoteRoot": "/app",
-                "port": 9229
-            },
-            "removeContainerAfterDebug": true
-        }
-    ]
+  "configurations": [
+    {
+      "name": "Python Debugger: Current File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "autoReload": {
+        "enable": true
+      },
+      "envFile": "${workspaceFolder}/weather-routing-service/dev.env"
+    }
+  ]
 }

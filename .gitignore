@@ -1,3 +1,4 @@
+**/logstash.db
 docker-elk/
 apisix-docker/
 .env*

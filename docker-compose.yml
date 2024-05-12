@@ -57,6 +57,25 @@ services:
     networks:
       - weather
 
+  weather-routing-service:
+    build:
+      context: ./weather-routing-service
+    image: docker.io/celtiberi/weather-routing-service:latest
+    container_name: weather-routing-service
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
+      MONGODB_URI: mongodb+srv://admin:ay5HG8TYzT0MMsTx@cluster0.ml7brdd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+      LOGSTASH_HOST: localhost
+      LOGSTASH_PORT: 5044
+    volumes:
+      - ./shared:/app/../shared
+    networks:
+      - weather
+
   nws-forecast-service:
     build: 
       context: ./nws-forecast-service

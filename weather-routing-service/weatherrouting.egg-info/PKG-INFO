@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: weatherrouting
+Version: 0.1.9
+Summary: Weather routing library for sailing
+Author: ['Davide Gessa']
+Author-email: gessadavide@gmail.com
+Requires-Dist: latlon3
