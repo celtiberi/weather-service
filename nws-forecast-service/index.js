@@ -1,7 +1,6 @@
 const jackrabbit = require('@pager/jackrabbit');
 const path = require('path');
 const fetch = require('node-fetch');
-const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const { createLogger, nws } = require('../shared/module');
 
@@ -40,7 +39,7 @@ async function saveForecast(zone, zoneType, forecastText) {
       zoneId: zone['ID'],
       zoneType: zoneType,
       forecast: forecastText,
-      timeZone: timeZone,
+      timeZone: timeZone,      
       expires: expirationTime, // purposfully not using expiresAt.  We need to control deleting the document ourselves.
     });
 
@@ -57,42 +56,42 @@ async function saveForecast(zone, zoneType, forecastText) {
 
 async function updateExpiredForecasts() {
   try {
-    const expiredForecasts = await nws.Forecast.find({
-      expires: { $lt: new Date() },
-    });
-    for (const forecast of expiredForecasts) {
-      const newForecast = await fetchForecast(
-        forecast.zoneId,
-        forecast.zoneType
-      );
-      const newForecastExpiration = nws.getForecastExpirationTime(
-        newForecast,
-        forecast.timeZone
-      );
-      // Check if the new forecast has an expiration that is greater than the current forecast
-      // Just because the forecast has expired does not mean the NWS has updated the forecast
-      // TODO we need a field on the forecast document to track how many times we have tried to update it (in the case that the forecast has not updated)
-      // at some point the forecast needs to go into a different system that just check it on occassion (maybe?)
-      if (newForecastExpiration > forecast.expires) {
-        forecast.forecast = newForecast;
-        forecast.expires = newForecastExpiration;
-        await forecast.save();
-        exchange.publish(
-          { zoneId: forecast.zoneId },
-          { key: 'forecast_update' }
-        );
-        logger.info(
-          `Forecast for zone ${forecast.zoneId} updated successfully`
-        );
-      } else {
-        logger.info(
-          `New forecast for zone ${forecast.zoneId} is not updated as its expiration is not greater than the current forecast`
-        );
-      }
+    const expiredForecasts = await nws.Forecast.find({ expires: { $lt: new Date() } });
+    for (const expiredForecast of expiredForecasts) {
+      await updateForecastIfNecessary(expiredForecast);
     }
   } catch (error) {
     logger.error(`Error updating expired forecasts:`, error);
   }
+}
+
+async function updateForecastIfNecessary(expiredForecast) {
+  const fetchForecastFunction = expiredForecast.zoneType === 'high_seas' ? fetchHighSeasForecast : fetchForecast;
+  const newForecast = await fetchForecastFunction(expiredForecast.zoneId, expiredForecast.zoneType);
+  try {
+    const newForecastExpiration = nws.getForecastExpirationTime(newForecast, expiredForecast.timeZone);
+    await processNewForecast(expiredForecast, newForecast, newForecastExpiration);
+  } catch (error) {
+    handleForecastExpirationError(expiredForecast, error);
+  }
+}
+
+async function processNewForecast(expiredForecast, newForecast, newForecastExpiration) {
+  if (newForecastExpiration > expiredForecast.expires) {
+    expiredForecast.forecast = newForecast;
+    expiredForecast.expires = newForecastExpiration;
+    await expiredForecast.save();
+    exchange.publish({ zoneId: expiredForecast.zoneId }, { key: 'forecast_update' });
+    logger.info(`Forecast for zone ${expiredForecast.zoneId} updated successfully`);
+  } else {
+    logger.info(`New forecast for zone ${expiredForecast.zoneId} is not updated as its expiration is not greater than the current forecast`);
+  }
+}
+
+async function handleForecastExpirationError(forecast, error) {
+  logger.error(`Failed to get valid expiration time for forecast of zone ${forecast.zoneId}: ${error}`);
+  logger.info(`Deleting forecast for zone ${forecast.zoneId} due to invalid expiration time.`);
+  await nws.Forecast.deleteOne({ _id: forecast._id });
 }
 
 zoneIdsWithNoForecast = [];
@@ -456,4 +455,5 @@ if (require.main === module) {
 module.exports = {
   initializeApp,
   fetchAndSaveAllForecasts,
+  updateExpiredForecasts,
 };

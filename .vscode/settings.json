@@ -1,5 +1,14 @@
 {
     "python.analysis.extraPaths": [
         "./weather-routing-service/libweatherrouting"
-    ]
+    ],
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./weather-routing-service/tests",
+        "-p",
+        "test_*.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true
 }

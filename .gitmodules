@@ -1,3 +1,0 @@
-[submodule "weather-routing-service/libweatherrouting"]
-	path = weather-routing-service/libweatherrouting
-	url = https://github.com/celtiberi/weather-service

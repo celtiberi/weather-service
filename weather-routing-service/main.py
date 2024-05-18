@@ -7,12 +7,20 @@ import json
 import logging
 # from logstash_async.handler import AsynchronousLogstashHandler
 import sys
-
+from dotenv import load_dotenv
 
 from weatherrouting import Routing, Polar
 from weatherrouting.routers.linearbestisorouter import LinearBestIsoRouter
 from datetime import datetime
 
+# Load environment variables from the specified .env file
+
+# Get the base directory of the script
+base_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Load environment variables based on the environment
+if os.environ.get('ENVIRONMENT') == 'development':
+    load_dotenv(os.path.join(base_dir, '.env.development'))
 
 # RabbitMQ connection settings
 rabbitmq_url = os.environ['RABBITMQ_URL']
@@ -41,6 +49,9 @@ logger.setLevel(logging.INFO)
 stdout_handler = logging.StreamHandler(sys.stdout) 
 logger.addHandler(stdout_handler)
 
+REQUESTS_QUEUE = 'weather_routing_requests'
+RESULTS_QUEUE = 'weather_routing_results'    
+
 def get_boat_info(boat_id):
     boat = boats_collection.find_one({'_id': boat_id})
     return boat
@@ -50,22 +61,31 @@ def send_routing_request(routing_data):
     channel.queue_declare(queue='routing_requests')
     channel.basic_publish(exchange='', routing_key='routing_requests', body=json.dumps(routing_data))
 
-def process_routing_result(ch, method, properties, body):
-    # Process routing result received from RabbitMQ queue
-    routing_result = json.loads(body)
-    # Perform necessary actions with the routing result
-    print(f"Received routing result: {routing_result}")
+
+def process_routing_request(ch, method, properties, body):
+    # Process routing request received from RabbitMQ queue
+    routing_request = json.loads(body)
+    # Perform necessary actions with the routing request
+    logger.info(f"Received routing request: {routing_request}")
+
+    # Generate routing result based on the request
+    routing_result = {
+        'status': 'success',
+        'data': {
+            'route': 'Calculated optimal route based on weather conditions',
+            'estimated_time': '4 hours'
+        }
+    }
+    
+    # Send the routing result back to the results queue
+    channel.basic_publish(exchange='', routing_key=RESULTS_QUEUE, body=json.dumps(routing_result))
+    logger.info(f"Sent routing result: {routing_result}")
 
     # Acknowledge the message
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
-
-# Start consuming routing results from RabbitMQ
-channel.queue_declare(queue='routing_results')
-channel.basic_consume(queue='routing_results', on_message_callback=process_routing_result)
-
-if __name__ == '__main__':
+def start_weather_routing_service():
     try:
         # Example usage
         boat_id = 'boat123'
@@ -73,17 +93,14 @@ if __name__ == '__main__':
         logger.info("test")
         # logger.info(f"Retrieved boat information for boat ID: {boat_id}")
 
-        routing_data = {
-            'boat_info': boat_info,
-            # Add other necessary data for routing
-        }
-        send_routing_request(routing_data)
-        logger.info(f"Sent routing request for boat ID: {boat_id}")
-
-        logger.info("Weather Routing Service is running. Waiting for routing results...")
+        logger.info("Weather Routing Service is running. Waiting for routing requests...")
+        channel.basic_consume(queue=REQUESTS_QUEUE, on_message_callback=process_routing_request, auto_ack=True)
         channel.start_consuming()
     except KeyboardInterrupt:
         logger.info("Weather Routing Service is stopping...")
     finally:
         connection.close()
         client.close()
+
+if __name__ == '__main__':
+    start_weather_routing_service()
