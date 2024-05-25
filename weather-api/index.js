@@ -2,6 +2,7 @@ const express = require('express');
 const jackrabbit = require('@pager/jackrabbit');
 const path = require('path');
 const { createLogger, nws } = require('../shared/module');
+const cors = require('cors');
 
 const dotenv = require('dotenv');
 const getDotEnvPath = (env) => {
@@ -17,6 +18,20 @@ logger.info('Hello, weather-api');
 
 const app = express();
 app.use(express.json());
+
+
+// app.use(cors({
+//   origin: (origin, callback) => {
+//     const allowedOrigins = ['http://localhost:3001', 'http://localhost:3000'];
+//     if (!origin || allowedOrigins.includes(origin)) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+// }));
 
 logger.info(`RABBITMQ_URL: ${process.env.RABBITMQ_URL}`);
 

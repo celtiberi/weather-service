@@ -3,6 +3,66 @@
   "version": 3,
   "endpoints": [
     {
+      "@comment": "this will fail due to double CORS validation",
+      "endpoint":"/cors/no-op",
+      "input_headers":["*"],
+      "output_encoding": "no-op",
+      "backend":[
+          {
+              "url_pattern": "/__debug/cors",
+              "host": ["http://localhost:8080"],
+              "encoding": "no-op"
+          }
+      ]
+    },
+    {
+      "@comment": "this won't fail because CORS preflight headers are removed from the request to the backend",
+      "endpoint":"/cors/no-op/martian",
+      "input_headers":["*"],
+      "output_encoding": "no-op",
+      "backend":[
+          {
+              "url_pattern": "/__debug/cors/martian",
+              "host": ["http://localhost:8080"],
+              "encoding": "no-op",
+              "extra_config":{
+                "modifier/martian": {
+                    "fifo.Group": {
+                        "scope": ["request", "response"],
+                        "aggregateErrors": true,
+                        "modifiers": [
+                            {
+                              "header.Blacklist": {
+                                "scope": ["request"],
+                                "names": [
+                                  "Access-Control-Request-Method",
+                                  "Sec-Fetch-Dest",
+                                  "Sec-Fetch-Mode",
+                                  "Sec-Fetch-Site",
+                                  "Origin"
+                                ]
+                              }
+                            }
+                        ]
+                    }
+                }
+              }
+          }
+      ]
+    },
+    {
+      "@comment": "this won't fail because no headers are added to the request to the backend",
+      "endpoint":"/cors/no-op/no-headers",
+      "output_encoding": "no-op",
+      "backend":[
+          {
+              "url_pattern": "/__debug/cors/no-headers",
+              "host": ["http://localhost:8080"],
+              "encoding": "no-op"
+          }
+      ]
+    },
+    {
       "endpoint": "/v1/point-forecast/{lat}/{lon}",
       "method": "GET",
       "backend": [
@@ -47,5 +107,32 @@
       ]
     }
   ],
-  "extra_config": {}
+  "extra_config": {
+    "router": {
+      "auto_options": true
+    },
+    "security/cors": {
+      "allow_origins": [
+        "*"
+      ],
+      "allow_methods": [
+        "GET",
+        "HEAD",
+        "POST",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "expose_headers": [
+        "Content-Length",
+        "Content-Type"
+      ],
+      "allow_headers": [
+        "Accept-Language"
+      ],
+      "max_age": "12h",
+      "allow_credentials": false,
+      "debug": false
+    }
+  }
 }

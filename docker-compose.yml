@@ -36,6 +36,19 @@ services:
     networks:
       - weather
 
+  # weather-web:
+  #   build:
+  #     context: ./weather-web
+  #   image: docker.io/celtiberi/weather-web:latest
+  #   container_name: weather-web
+  #   restart: always
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - weather-api
+  #   networks:
+  #     - weather
+
   boat-api:
     build: 
       context: ./boat-api      
