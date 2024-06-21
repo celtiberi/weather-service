@@ -1,5 +1,28 @@
 services:
 
+  boat-api:
+    build: 
+      context: ./boat-api      
+    image: docker.io/celtiberi/boat-api:latest
+    container_name: boat-api
+    restart: always
+    ports: 
+      - "3050:3000"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
+      MONGODB_URI: /run/secrets/mongodb_uri
+      LOGSTASH_HOST: localhost
+      LOGSTASH_PORT: 5044
+    secrets:
+      - mongodb_uri
+    volumes:
+      - ./shared:/app/../shared
+    networks:
+      - weather
+
   elk:
     image: sebp/elk
     ports:
@@ -9,12 +32,56 @@ services:
     networks:
       - weather
 
+  grib-downloader:
+    build: 
+      context: ./grib-downloader
+    image: docker.io/celtiberi/grib-downloader:latest
+    container_name: grib-downloader
+    restart: always
+    ports:
+      - "9231:9229"
+    volumes:
+      - grib_data:/app/grib_files
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      MONGODB_URI: /run/secrets/mongodb_uri
+      RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
+      LOGSTASH_HOST: localhost
+      LOGSTASH_PORT: 5044
+    secrets:
+      - mongodb_uri
+    networks:
+      - weather
+
   krakend:
     image: devopsfaith/krakend
     ports:
       - "8080:8080"
     volumes:
       - ./krakend.json:/etc/krakend/krakend.json
+    networks:
+      - weather
+
+  nws-forecast-service:
+    build: 
+      context: ./nws-forecast-service
+    image: docker.io/celtiberi/nws-forecast-service:latest
+    container_name: nws-forecast-service
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
+      MONGODB_URI: /run/secrets/mongodb_uri
+      LOGSTASH_HOST: localhost
+      LOGSTASH_PORT: 5044
+    secrets:
+      - mongodb_uri
+    volumes:
+      - ./shared:/app/../shared
     networks:
       - weather
 
@@ -36,78 +103,6 @@ services:
     networks:
       - weather
 
-  # weather-web:
-  #   build:
-  #     context: ./weather-web
-  #   image: docker.io/celtiberi/weather-web:latest
-  #   container_name: weather-web
-  #   restart: always
-  #   ports:
-  #     - "3000:3000"
-  #   depends_on:
-  #     - weather-api
-  #   networks:
-  #     - weather
-
-  boat-api:
-    build: 
-      context: ./boat-api      
-    image: docker.io/celtiberi/boat-api:latest
-    container_name: boat-api
-    restart: always
-    ports:
-      - "3050:3000"
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    environment:
-      RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
-      MONGODB_URI: mongodb+srv://admin:ay5HG8TYzT0MMsTx@cluster0.ml7brdd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
-      LOGSTASH_HOST: localhost
-      LOGSTASH_PORT: 5044
-    volumes:
-      - ./shared:/app/../shared
-    networks:
-      - weather
-
-  weather-routing-service:
-    build:
-      context: ./weather-routing-service
-    image: docker.io/celtiberi/weather-routing-service:latest
-    container_name: weather-routing-service
-    restart: always
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    environment:
-      RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
-      MONGODB_URI: mongodb+srv://admin:ay5HG8TYzT0MMsTx@cluster0.ml7brdd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
-      LOGSTASH_HOST: localhost
-      LOGSTASH_PORT: 5044
-    volumes:
-      - ./shared:/app/../shared
-    networks:
-      - weather
-
-  nws-forecast-service:
-    build: 
-      context: ./nws-forecast-service
-    image: docker.io/celtiberi/nws-forecast-service:latest
-    container_name: nws-forecast-service
-    restart: always
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    environment:
-      RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
-      MONGODB_URI: mongodb+srv://admin:ay5HG8TYzT0MMsTx@cluster0.ml7brdd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
-      LOGSTASH_HOST: localhost
-      LOGSTASH_PORT: 5044
-    volumes:
-      - ./shared:/app/../shared
-    networks:
-      - weather
-
   weather-api:
     build: 
       context: ./weather-api      
@@ -123,35 +118,38 @@ services:
         condition: service_healthy
     environment:
       RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
-      MONGODB_URI: mongodb+srv://admin:ay5HG8TYzT0MMsTx@cluster0.ml7brdd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+      MONGODB_URI: /run/secrets/mongodb_uri
       LOGSTASH_HOST: localhost
       LOGSTASH_PORT: 5044
+      ANTHROPIC_API_KEY: /run/secrets/anthropic_api_key
+    secrets:
+      - mongodb_uri
+      - anthropic_api_key
     volumes:
       - ./shared:/app/../shared
     networks:
       - weather
 
-  grib-downloader:
+  weather-web:
     build: 
-      context: ./grib-downloader
-    image: docker.io/celtiberi/grib-downloader:latest
-    container_name: grib-downloader
+      context: ./weather-web     
+    image: docker.io/celtiberi/weather-web:latest
+    container_name: weather-web
     restart: always
     ports:
-      - "9231:9229"
-    volumes:
-      - grib_data:/app/grib_files
+      - "3000:3000"
     depends_on:
-      rabbitmq:
-        condition: service_healthy
+      weather-api:
+        condition: service_started
     environment:
-      MONGODB_URI: mongodb+srv://admin:ay5HG8TYzT0MMsTx@cluster0.ml7brdd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
-      RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
-      LOGSTASH_HOST: localhost
-      LOGSTASH_PORT: 5044
+      ANTHROPIC_API_KEY: /run/secrets/anthropic_api_key
+    secrets:
+      - anthropic_api_key
+    volumes:
+      - ./shared:/app/../shared
     networks:
       - weather
-
+      
 volumes:  
   rabbitmq_data:
   grib_data:
@@ -168,3 +166,8 @@ networks:
   weather:
     driver: bridge
   
+secrets:
+  mongodb_uri:
+    file: ./secrets/mongodb_uri.txt
+  anthropic_api_key:
+    file: ./secrets/anthropic_api_key.txt
