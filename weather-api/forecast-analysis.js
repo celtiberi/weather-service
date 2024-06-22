@@ -29,11 +29,8 @@ dns.resolve('ac-eiyfuta-shard-00-00.ml7brdd.mongodb.net', (err, addresses) => {
 mongoose.connect(mongodbUri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000, // Reduce the timeout
-  socketTimeoutMS: 45000, // Increase socket timeout
-  family: 4, // Force IPv4
-  // If your URI doesn't include the database name, add it here
-  // dbName: 'your_database_name'
+  ssl: true,
+  sslValidate: true,
 }).then(() => {
   console.log('Connected to MongoDB successfully');
 }).catch(error => {
