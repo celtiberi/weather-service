@@ -1,10 +1,27 @@
-FROM node:14
+# Build stage
+FROM node:21.7.2 AS builder
 
+# Set working directory
 WORKDIR /app
 
-COPY package*.json ./
+# Copy shared module and install its dependencies
+COPY shared /app/shared
+WORKDIR /app/shared/module
 RUN npm install
 
-COPY . .
+# Copy service files and install its dependencies
+WORKDIR /app/service
+COPY grib-downloader .
+RUN npm install
 
-CMD ["node", "index.js"]
+# Final stage
+FROM node:21.7.2-slim
+
+# Set working directory
+WORKDIR /app
+
+# Copy built files from builder stage
+COPY --from=builder /app .
+
+# Set command to run the service
+CMD ["node", "service/index.js"]

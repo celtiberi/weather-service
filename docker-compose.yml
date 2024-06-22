@@ -2,7 +2,8 @@ services:
 
   boat-api:
     build: 
-      context: ./boat-api      
+      context: .
+      dockerfile: ./boat-api/Dockerfile
     image: docker.io/celtiberi/boat-api:latest
     container_name: boat-api
     restart: always
@@ -34,7 +35,8 @@ services:
 
   grib-downloader:
     build: 
-      context: ./grib-downloader
+      context: .
+      dockerfile: ./grib-downloader/Dockerfile
     image: docker.io/celtiberi/grib-downloader:latest
     container_name: grib-downloader
     restart: always
@@ -66,7 +68,8 @@ services:
 
   nws-forecast-service:
     build: 
-      context: ./nws-forecast-service
+      context: .
+      dockerfile: ./nws-forecast-service/Dockerfile
     image: docker.io/celtiberi/nws-forecast-service:latest
     container_name: nws-forecast-service
     restart: always
@@ -105,7 +108,8 @@ services:
 
   weather-api:
     build: 
-      context: ./weather-api      
+      context: .
+      dockerfile: ./weather-api/Dockerfile
     image: docker.io/celtiberi/weather-api:latest
     container_name: weather-api
     restart: always

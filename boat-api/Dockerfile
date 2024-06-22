@@ -1,20 +1,27 @@
-# Use the official Node.js image as the base
-FROM node:21.7.2
+# Build stage
+FROM node:21.7.2 AS builder
 
-# Set the working directory in the container
+# Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json to the working directory
-COPY package*.json ./
-
-# Install the dependencies
+# Copy shared module and install its dependencies
+COPY shared /app/shared
+WORKDIR /app/shared/module
 RUN npm install
 
-# Copy the rest of the application files to the working directory
-COPY . .
+# Copy service files and install its dependencies
+WORKDIR /app/service
+COPY boat-api .
+RUN npm install
 
-# Expose the port on which the server will run
-EXPOSE 3000
+# Final stage
+FROM node:21.7.2-slim
 
-# Start the server
-CMD ["node", "index.js"]
+# Set working directory
+WORKDIR /app
+
+# Copy built files from builder stage
+COPY --from=builder /app .
+
+# Set command to run the service
+CMD ["node", "service/index.js"]

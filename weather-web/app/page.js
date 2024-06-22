@@ -48,9 +48,29 @@ const Home = () => {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold text-center sm:text-left">Weather Forecast</h1>
+      
+      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+        <h2 className="text-xl font-semibold mb-2">NWS Marine Weather Analysis</h2>
+        <p className="mb-2">
+          This tool provides detailed marine weather forecasts based on specific locations you select. Only zones supported by the NWS will contain forecast.
+        </p>
+        <h3 className="font-semibold mt-3 mb-1">How to Use:</h3>
+        <ol className="list-decimal list-inside">
+          <li>Click on any point on the map below to select a location.</li>
+          <li>The app will fetch the relevant weather forecast for that location.</li>
+          <li>You&apos;ll receive forecasts for three zones: Coastal, Offshore, and High Seas (if available).</li>
+          <li>An AI-generated analysis of the forecast will also be provided.</li>
+          <li>Use the buttons below the map to switch between different forecast types.</li>
+        </ol>
+        <p className="mt-2">
+          The forecasts are sourced from the National Weather Service (NWS) marine weather data.
+        </p>
+      </div>
+
       <div className="h-[300px] sm:h-[400px] w-full">
         <Map onLocationClick={handleLocationClick} />
       </div>
+      
       {coordinates && (
         <p className="text-lg text-center sm:text-left">
           Selected coordinates: {coordinates.lat.toFixed(4)}°, {coordinates.lng.toFixed(4)}°

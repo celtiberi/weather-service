@@ -41,17 +41,13 @@ app.get('/point-forecast', async (req, res) => {
 
     let forecasts = await nws.getPointForecasts(coordinate.lat, coordinate.lon)
     
-    if(!forecasts)
+    if (!forecasts && (!forecasts['coastal'] && !forecasts['offshore'] && !forecasts['high_seas']))
     {
       res.status(404).send("No forecast available for the selected location.");
       return;
     }
 
-    if (forecasts) {
-      
-      forecastsAnalysis = await analyzeWeatherForecast(forecasts);
-    }
-
+    forecastsAnalysis = await analyzeWeatherForecast(forecasts);
     res.json({ forecastsAnalysis, forecasts });
     
   } catch (error) {
