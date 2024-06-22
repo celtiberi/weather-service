@@ -16,15 +16,30 @@ const client = new Anthropic({ apiKey: anthropicApiKey });
 
 const mongodbUri = getSecret('MONGODB_URI');
 console.log('Connecting to MongoDB...' + mongodbUri);
+
+const dns = require('dns');
+dns.resolve('ac-eiyfuta-shard-00-00.ml7brdd.mongodb.net', (err, addresses) => {
+  if (err) {
+    console.error('DNS resolution failed:', err);
+  } else {
+    console.log('DNS resolution successful:', addresses);
+  }
+});
+
 mongoose.connect(mongodbUri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000, // Reduce the timeout
+  socketTimeoutMS: 45000, // Increase socket timeout
+  family: 4, // Force IPv4
   // If your URI doesn't include the database name, add it here
   // dbName: 'your_database_name'
 }).then(() => {
   console.log('Connected to MongoDB successfully');
 }).catch(error => {
   console.error('Error connecting to MongoDB:', error);
+  console.error('MongoDB URI:', mongodbUri.replace(/:[^:@]+@/, ':****@')); // Log URI with hidden password
+  console.error('Full error object:', JSON.stringify(error, null, 2));
 });
 
 // Define Mongoose schema

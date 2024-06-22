@@ -160,13 +160,6 @@ volumes:
   grafana_data:
 
 networks:
-  mongo-network:
-    name: mongo-network
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
-          gateway: 172.20.0.254
   weather:
     driver: bridge
   
