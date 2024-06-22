@@ -34,7 +34,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./weather-web
-          file: ./weather-wev/Dockerfile
+          file: ./weather-web/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/weather-web:latest
       -
