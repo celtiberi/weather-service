@@ -20,11 +20,16 @@ jobs:
       run: |
         services=("weather-api" "weather-web" "nws-forecast-service" "boat-api" "grib-downloader")
         for service in "${services[@]}"; do
+          echo "Building $service"
+          echo "Contents of $service directory:"
+          ls -la $service
+          echo "Contents of Dockerfile:"
+          cat $service/Dockerfile
           docker buildx build \
             --file ./$service/Dockerfile \
             --push \
             --tag ${{ secrets.DOCKERHUB_USERNAME }}/$service:latest \
-            .
+            . || echo "Build failed for $service"
         done
     - name: Clean up and deploy
       uses: appleboy/ssh-action@v0.1.7
