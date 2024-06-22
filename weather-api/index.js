@@ -48,6 +48,7 @@ app.get('/point-forecast', async (req, res) => {
     }
 
     if (forecasts) {
+      
       forecastsAnalysis = await analyzeWeatherForecast(forecasts);
     }
 
