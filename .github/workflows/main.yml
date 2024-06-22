@@ -6,71 +6,42 @@ on:
       - "main"
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v4
-      -
-        name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      -
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      -
-        name: Build and push (weather-api)
-        uses: docker/build-push-action@v5
-        with:
-          context: ./weather-api
-          file: ./weather-api/Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/weather-api:latest
-      -
-        name: Build and push (weather-web)
-        uses: docker/build-push-action@v5
-        with:
-          context: ./weather-web
-          file: ./weather-web/Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/weather-web:latest
-      -
-        name: Build and push (nws-forecast-service)
-        uses: docker/build-push-action@v5
-        with:
-          context: ./nws-forecast-service
-          file: ./nws-forecast-service/Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/nws-forecast-service:latest
-      -
-        name: Build and push (boat-api)
-        uses: docker/build-push-action@v5
-        with:
-          context: ./boat-api
-          file: ./boat-api/Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/boat-api:latest
-      -
-        name: Build and push (grib-downloader)
-        uses: docker/build-push-action@v5
-        with:
-          context: ./grib-downloader
-          file: ./grib-downloader/Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/grib-downloader:latest
-      - 
-        name: Executing remote SSH commands
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.VM_SSH_HOST }}
-          username: ${{ secrets.VM_SSH_USER }}
-          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
-          script: |
-            cd /home/ubuntu/weather-service
-            git pull origin main
-            docker compose down
-            docker compose pull
-            docker compose up -d
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build and push images
+      run: |
+        services=("weather-api" "weather-web" "nws-forecast-service" "boat-api" "grib-downloader")
+        for service in "${services[@]}"; do
+          docker buildx build \
+            --file ./$service/Dockerfile \
+            --push \
+            --tag ${{ secrets.DOCKERHUB_USERNAME }}/$service:latest \
+            ./$service
+        done
+
+    - name: Clean up and deploy
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.VM_SSH_HOST }}
+        username: ${{ secrets.VM_SSH_USER }}
+        key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+        script: |
+          cd /home/ubuntu/weather-service
+          git pull origin main
+          docker system prune -af --volumes
+          docker compose down
+          docker compose pull
+          docker compose up -d
