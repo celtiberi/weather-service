@@ -10,17 +10,34 @@ const Map = dynamic(() => import('../components/Map'), {
 
 const Home = () => {
   const [forecast, setForecast] = useState(null);
+  const [forecastAnalysis, setForecastAnalysis] = useState(null);
 
   const handleLocationClick = async (latlng) => {
     const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/point-forecast/${latlng.lat}/${latlng.lng}`;
-    const response = await axios.get(url);
-    setForecast(response.data);
+    try {
+      const response = await axios.get(url);
+      setForecast(response.data.forecasts);
+      setForecastAnalysis(response.data.forecastsAnalysis);
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        setForecast(null);
+        setForecastAnalysis("No forecast available for the selected location.");
+      } else {
+        console.error("Failed to fetch forecast:", error);
+      }
+    }
   };
 
   return (
     <div>
       <h1>Weather Forecast</h1>
       <Map onLocationClick={handleLocationClick} />
+      {forecastAnalysis && (
+        <div>
+          <h2>Forecast Analysis</h2>
+          <pre>{forecastAnalysis}</pre>
+        </div>
+      )}
       {forecast && (
         <div>
           {forecast.coastal && (

@@ -19,10 +19,19 @@ path: path.resolve(
 ),
 });
 
-console.log("process.env.MONGODB_URI: ", process.env.MONGODB_URI)
+const fs = require('fs');
+function getSecret(envVar) {
+  const secretPath = process.env[envVar];
+  if (secretPath && secretPath.startsWith('/run/secrets/')) {
+    return fs.readFileSync(secretPath, 'utf8').trim();
+  }
+  return process.env[envVar];
+}
 
+const mongodbUri = getSecret('MONGODB_URI');
+console.log('Connecting to MongoDB...' + mongodbUri);
+mongoose.connect(mongodbUri);
 
-mongoose.connect(process.env.MONGODB_URI);
 mongoose.connection.on(
 'error',
 console.error.bind(console, 'MongoDB connection error:')

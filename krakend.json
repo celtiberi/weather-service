@@ -1,6 +1,7 @@
 {
   "$schema": "https://www.krakend.io/schema/v2.6/krakend.json",
   "version": 3,
+  "timeout": "10000ms",
   "endpoints": [
     {
       "@comment": "this will fail due to double CORS validation",

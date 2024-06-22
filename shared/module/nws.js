@@ -20,8 +20,19 @@ dotenv.config({
   ),
 });
 
-console.log('Connecting to MongoDB...' + process.env.MONGODB_URI);
-mongoose.connect(process.env.MONGODB_URI);
+const fs = require('fs');
+
+function getSecret(envVar) {
+  const secretPath = process.env[envVar];
+  if (secretPath && secretPath.startsWith('/run/secrets/')) {
+    return fs.readFileSync(secretPath, 'utf8').trim();
+  }
+  return process.env[envVar];
+}
+
+const mongodbUri = getSecret('MONGODB_URI');
+console.log('Connecting to MongoDB...' + mongodbUri);
+mongoose.connect(mongodbUri);
 
 const mongooseConnectionPromise = new Promise((resolve, reject) => {
   mongoose.connection.on('open', () => {
