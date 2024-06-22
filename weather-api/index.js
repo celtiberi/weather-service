@@ -1,8 +1,9 @@
 const express = require('express');
 const jackrabbit = require('@pager/jackrabbit');
 const path = require('path');
-const { createLogger, nws } = require('../shared/module');
+const { createLogger, nws, connectToMongoDB } = require('../shared/module');
 const { analyzeWeatherForecast } = require('./forecast-analysis.js');
+
 
 const dotenv = require('dotenv');
 const getDotEnvPath = (env) => {
@@ -56,9 +57,20 @@ app.get('/point-forecast', async (req, res) => {
   }
 });
 
-// Start the server
-const server = app.listen(3100, () => {
-  logger.info('Server is running on port 3100');
-});
+let server
+
+async function startServer() {
+  try {
+    await connectToMongoDB();
+    server = app.listen(3100, () => {
+      logger.info('Server is running on port 3100');
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 module.exports = server;

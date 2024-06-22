@@ -55,35 +55,4 @@ describe('NWS Module', function() {
     expect(localTime).to.equal("America/Nassau");
   });
 
-  // Was testing to see if we could get the full document when a delete occured.  It is not for sure.  
-  // it('should know when a document is expired from the mongoDB', async (done) => {
-  //   let connection = await nws.mongooseConnectionPromise;
-  //   const testCollection = connection.collection('test');
-  
-  //   const testDocument = {
-  //     x: 10,
-  //     y: 20,
-  //     expiresAt: new Date(Date.now() + 3000)
-  //   };
-  //   await testCollection.insertOne(testDocument);
-  
-  //   const changeStream = testCollection.watch([], { fullDocument: "updateLookup", fullDocumentBeforeChange: 'required' });
-  
-  //   let documentExpired = false;
-  //   changeStream.on('change', async (change) => {
-  //     if (change.operationType === 'delete') {
-  //       expect(change.fullDocumentBeforeChange.x).to.equal(10);
-  //       expect(change.fullDocumentBeforeChange.y).to.equal(20);
-  //       done();
-  //     }
-  //   });
-  
-  //   await new Promise((resolve) => {
-  //     setTimeout(() => {
-  //       resolve();
-  //     }, 5000);
-  //   });
-  
-  //   expect(documentExpired).to.be.true;
-  // });
 });

@@ -1,5 +1,5 @@
 // forecast-analysis.js
-const mongoose = require('mongoose');
+const { mongoose } = require('../shared/module');
 const { Anthropic } = require('@anthropic-ai/sdk');
 const fs = require('fs');
 
@@ -14,43 +14,6 @@ function getSecret(envVar) {
 const anthropicApiKey = getSecret('ANTHROPIC_API_KEY');
 const client = new Anthropic({ apiKey: anthropicApiKey });
 
-const mongodbUri = getSecret('MONGODB_URI');
-console.log('Connecting to MongoDB...' + mongodbUri);
-
-const dns = require('dns');
-dns.resolve('ac-eiyfuta-shard-00-00.ml7brdd.mongodb.net', (err, addresses) => {
-  if (err) {
-    console.error('DNS resolution failed:', err);
-  } else {
-    console.log('DNS resolution successful:', addresses);
-  }
-});
-
-let isConnected = false;
-
-async function connectToMongoDB() {
-  if (isConnected) return;
-
-  try {
-    await mongoose.connect(mongodbUri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      ssl: true,
-      sslValidate: true,
-    });
-    isConnected = true;
-    console.log('Connected to MongoDB successfully');
-  } catch (error) {
-    console.error('Error connecting to MongoDB:', error);
-    throw error;
-  }
-}
-
-mongoose.connection.on('disconnected', () => {
-  console.log('Lost MongoDB connection. Retrying...');
-  isConnected = false;
-  connectToMongoDB();
-});
 
 // Define Mongoose schema
 const forecastAnalysisSchema = new mongoose.Schema({
@@ -62,9 +25,14 @@ const forecastAnalysisSchema = new mongoose.Schema({
 
 const ForecastAnalysis = mongoose.model('ForecastAnalysis', forecastAnalysisSchema);
 
-async function analyzeWeatherForecast(weatherForecast) {
-  await connectToMongoDB();
+function logConnectionStatus() {
+  const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+  console.log(`Mongoose connection status: ${states[mongoose.connection.readyState]}`);
+}
 
+async function analyzeWeatherForecast(weatherForecast) {
+
+  logConnectionStatus();
   const zoneId = weatherForecast.coastal?.zoneId || weatherForecast.offshore?.zoneId || weatherForecast.high_seas?.zoneId;
 
   // Check for existing analysis

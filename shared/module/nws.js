@@ -1,7 +1,7 @@
 const shapefile = require('shapefile');
 const turf = require('@turf/turf');
 const path = require('path');
-const mongoose = require('mongoose');
+const { mongoose } = require('./db-connection');
 const dotenv = require('dotenv');
 const tzlookup = require("tz-lookup");
 const moment = require('moment-timezone');
@@ -18,31 +18,6 @@ dotenv.config({
     process.cwd(),
     getDotEnvPath(process.env.NODE_ENV?.toUpperCase())
   ),
-});
-
-const fs = require('fs');
-
-function getSecret(envVar) {
-  const secretPath = process.env[envVar];
-  if (secretPath && secretPath.startsWith('/run/secrets/')) {
-    return fs.readFileSync(secretPath, 'utf8').trim();
-  }
-  return process.env[envVar];
-}
-
-const mongodbUri = getSecret('MONGODB_URI');
-console.log('Connecting to MongoDB...' + mongodbUri);
-mongoose.connect(mongodbUri);
-
-const mongooseConnectionPromise = new Promise((resolve, reject) => {
-  mongoose.connection.on('open', () => {
-    console.log('MongoDB connection successful');
-    resolve(mongoose.connection);
-  });
-  mongoose.connection.on('error', (error) => {
-    console.error('MongoDB connection error:', error);
-    reject(error);
-  });
 });
 
 const forecastSchema = new mongoose.Schema({
@@ -75,7 +50,6 @@ const forecastSchema = new mongoose.Schema({
 // Create the forecast model
 const Forecast = mongoose.model('Forecast', forecastSchema);
 
-// Get the Forecast collection
 const forecastCollection = mongoose.connection.collection('forecasts');
 
 // Define paths for marine zone shapefiles and dbf files
@@ -302,7 +276,6 @@ function getForecastExpirationTime(forecast, timeZone) {
 }
 
 module.exports = {
-  mongooseConnectionPromise,
   getLocalTimeForZone,
   getMarineZones,
   getMarineZonesByGPS,

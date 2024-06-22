@@ -27,7 +27,6 @@ describe('Integration Test - index.js', () => {
     const app = require('../index.js');
     //await app.initializeApp()
 
-    await nws.mongooseConnectionPromise;
     const coastalForecasts = await nws.Forecast.find({ zoneType: 'coastal' });
     const offshoreForecasts = await nws.Forecast.find({ zoneType: 'offshore' });
     const highSeasForecasts = await nws.Forecast.find({ zoneType: 'high_seas' });
