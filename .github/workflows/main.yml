@@ -1,26 +1,21 @@
 name: Backend Chat CI/CD
-
 on:
   push:
     branches:
       - "main"
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-
     - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-
     - name: Build and push images
       run: |
         services=("weather-api" "weather-web" "nws-forecast-service" "boat-api" "grib-downloader")
@@ -29,9 +24,8 @@ jobs:
             --file ./$service/Dockerfile \
             --push \
             --tag ${{ secrets.DOCKERHUB_USERNAME }}/$service:latest \
-            ./$service
+            .
         done
-
     - name: Clean up and deploy
       uses: appleboy/ssh-action@v0.1.7
       with:
