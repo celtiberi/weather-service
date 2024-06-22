@@ -26,17 +26,30 @@ dns.resolve('ac-eiyfuta-shard-00-00.ml7brdd.mongodb.net', (err, addresses) => {
   }
 });
 
-mongoose.connect(mongodbUri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  ssl: true,
-  sslValidate: true,
-}).then(() => {
-  console.log('Connected to MongoDB successfully');
-}).catch(error => {
-  console.error('Error connecting to MongoDB:', error);
-  console.error('MongoDB URI:', mongodbUri.replace(/:[^:@]+@/, ':****@')); // Log URI with hidden password
-  console.error('Full error object:', JSON.stringify(error, null, 2));
+let isConnected = false;
+
+async function connectToMongoDB() {
+  if (isConnected) return;
+
+  try {
+    await mongoose.connect(mongodbUri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      ssl: true,
+      sslValidate: true,
+    });
+    isConnected = true;
+    console.log('Connected to MongoDB successfully');
+  } catch (error) {
+    console.error('Error connecting to MongoDB:', error);
+    throw error;
+  }
+}
+
+mongoose.connection.on('disconnected', () => {
+  console.log('Lost MongoDB connection. Retrying...');
+  isConnected = false;
+  connectToMongoDB();
 });
 
 // Define Mongoose schema
@@ -50,6 +63,8 @@ const forecastAnalysisSchema = new mongoose.Schema({
 const ForecastAnalysis = mongoose.model('ForecastAnalysis', forecastAnalysisSchema);
 
 async function analyzeWeatherForecast(weatherForecast) {
+  await connectToMongoDB();
+
   const zoneId = weatherForecast.coastal?.zoneId || weatherForecast.offshore?.zoneId || weatherForecast.high_seas?.zoneId;
 
   // Check for existing analysis
