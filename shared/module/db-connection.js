@@ -1,3 +1,4 @@
+
 const mongoose = require('mongoose');
 const fs = require('fs');
 
@@ -15,7 +16,7 @@ let isConnected = false;
 function logConnectionStatus() {
     const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
     console.log(`Mongoose connection status: ${states[mongoose.connection.readyState]}`);
-  }
+}
 
 async function connectToMongoDB() {
   if (isConnected) return mongoose.connection;
