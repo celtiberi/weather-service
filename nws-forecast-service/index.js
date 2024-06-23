@@ -25,7 +25,6 @@ dotenv.config({
 
 const rabbit = jackrabbit(process.env.RABBITMQ_URL);
 var exchange = rabbit.default();
-var forecastUpdate = exchange.queue({ name: 'forecast_update' });
 
 async function saveForecast(zone, zoneType, forecastText) {
   try {
@@ -362,8 +361,17 @@ async function fetchAndSaveAllForecasts() {
       if (skipZoneIds.includes(zoneId)) {
         continue;
       }
-      const existingForecast = await nws.Forecast.findOne({ zoneId: zoneId });
+      let existingForecast;
+      try {
+        existingForecast = await nws.Forecast.findOne({ zoneId: zoneId });
+      } catch (error) {
+        logger.error(`Error fetching existing forecast for zoneId ${zoneId}: ${error}`);
+        continue;
+      }
       if (!existingForecast) {
+        await fetchAndSaveForecast(zones[zoneType][zoneId], zoneType);
+      } else if (existingForecast.expires < new Date()) {
+        await nws.Forecast.deleteOne({ _id: existingForecast._id });
         await fetchAndSaveForecast(zones[zoneType][zoneId], zoneType);
       } else {
         logger.info(

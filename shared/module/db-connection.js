@@ -19,7 +19,7 @@ function logConnectionStatus() {
 }
 
 async function connectToMongoDB() {
-  if (isConnected) return mongoose.connection;
+  if (isConnected && mongoose.connection.readyState === 1) return mongoose.connection;
 
   try {
     console.log('Attempting to connect to MongoDB...');

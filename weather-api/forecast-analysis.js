@@ -2,9 +2,14 @@
 
 
 
-const { mongoose } = require('../shared/module');
+const { connectToMongoDB } = require('../shared/module');
 const { Anthropic } = require('@anthropic-ai/sdk');
+const mongoose = require('mongoose');
+
 const fs = require('fs');
+
+connectToMongoDB();
+
 
 function getSecret(envVar) {
   const secretPath = process.env[envVar];

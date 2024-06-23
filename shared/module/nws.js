@@ -1,10 +1,13 @@
 const shapefile = require('shapefile');
 const turf = require('@turf/turf');
 const path = require('path');
-const { mongoose } = require('./db-connection');
+const mongoose = require('mongoose');
+const { connectToMongoDB  } = require('./db-connection');
 const dotenv = require('dotenv');
 const tzlookup = require("tz-lookup");
 const moment = require('moment-timezone');
+
+connectToMongoDB();
 
 const getDotEnvPath = (env) => {
   if (env === 'TEST') {
