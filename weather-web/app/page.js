@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import dynamic from 'next/dynamic';
+import Registration from '../components/Registration';
 
 const Map = dynamic(() => import('../components/Map'), {
   ssr: false,
@@ -49,6 +50,8 @@ const Home = () => {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold text-center sm:text-left">Weather Forecast</h1>
+      
+      <Registration />
       
       <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
         <h2 className="text-xl font-semibold mb-2">NWS Marine Weather Analysis</h2>

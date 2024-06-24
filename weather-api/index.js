@@ -33,6 +33,17 @@ var forecastUpdate = exchange.queue({ name: 'forecast_update' });
 //  ---------------------------
 
 
+const userSchema = new mongoose.Schema({
+  userId: String,
+  lastPosition: {
+    lat: Number,
+    lng: Number,
+    updatedAt: { type: Date, default: Date.now }
+  },
+  pushSubscription: Object,
+  deviceType: { type: String, enum: ['web', 'mobile'], required: true },
+  registeredAt: { type: Date, default: Date.now }
+});
 
 
 
