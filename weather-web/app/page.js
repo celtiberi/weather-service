@@ -26,7 +26,8 @@ const Home = () => {
     setCoordinates(latlng);
     setLoading(true);
     setError(null);
-    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/point-forecast/${latlng.lat}/${latlng.lng}`;
+    const baseUrl = "http://207.5.194.71:8080"; // Hardcoded as environment variable is not populating
+    const url = `${baseUrl}/v1/point-forecast/${latlng.lat}/${latlng.lng}`;
     try {
       const response = await axios.get(url);
       setForecast(response.data.forecasts);
