@@ -24,14 +24,14 @@ services:
     networks:
       - weather
 
-  elk:
-    image: sebp/elk
-    ports:
-      - "5601:5601"
-      - "9200:9200"
-      - "5044:5044"
-    networks:
-      - weather
+  # elk:
+  #   image: sebp/elk
+  #   ports:
+  #     - "5601:5601"
+  #     - "9200:9200"
+  #     - "5044:5044"
+  #   networks:
+  #     - weather
 
   grib-downloader:
     build: 
@@ -99,10 +99,10 @@ services:
       - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
       - ./definitions.json:/etc/rabbitmq/definitions.json
     healthcheck:
-      test: rabbitmq-diagnostics check_port_connectivity
-      interval: 1s
-      timeout: 3s
-      retries: 30
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - weather
 
@@ -153,11 +153,26 @@ services:
       - ./shared:/app/../shared
     networks:
       - weather
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    command: mongod --noauth
+    networks:
+      - weather
+
       
 volumes:  
   rabbitmq_data:
   grib_data:
-  grafana_data:
+  # grafana_data:
+  mongodb_data:
 
 networks:
   weather:

@@ -7,6 +7,8 @@ DOCKER_COMPOSE = docker compose
 build:
 	$(DOCKER_COMPOSE) build
 
+weather:
+	 docker-compose up --build weather-api
 up:
 	$(DOCKER_COMPOSE) up -d
 

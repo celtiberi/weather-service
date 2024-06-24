@@ -2,12 +2,23 @@ const shapefile = require('shapefile');
 const turf = require('@turf/turf');
 const path = require('path');
 const mongoose = require('mongoose');
-const { connectToMongoDB  } = require('./db-connection');
 const dotenv = require('dotenv');
 const tzlookup = require("tz-lookup");
 const moment = require('moment-timezone');
 
-connectToMongoDB();
+console.log("Attempting to connect to MongoDB...");
+//const mongodbUri = 'mongodb+srv://admin:ay5HG8TYzT0MMsTx@cluster0.ml7brdd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+ const mongodbUri = 'mongodb://mongodb:27017/ocean';
+//const mongodbUri = 'mongodb://127.0.0.1:27017/ocean';
+mongoose.connect(mongodbUri)
+.then(() => {
+  console.log('Mongoose connected to MongoDB');
+  console.log(`Mongoose connection ready state: ${mongoose.connection.readyState}`);
+})
+.catch((err) => {
+  console.error('Mongoose connection error:', err);
+  process.exit(1);
+});
 
 const getDotEnvPath = (env) => {
   if (env === 'TEST') {
@@ -46,9 +57,7 @@ const forecastSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
-},
-{ collectionOptions: { changeStreamPreAndPostImages: { enabled: true } } }
-);
+});
 
 // Create the forecast model
 const Forecast = mongoose.model('Forecast', forecastSchema);

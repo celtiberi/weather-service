@@ -1,8 +1,9 @@
 const express = require('express');
 const jackrabbit = require('@pager/jackrabbit');
 const path = require('path');
-const { createLogger, nws, connectToMongoDB } = require('../shared/module');
+const { createLogger, nws } = require('../shared/module');
 const { analyzeWeatherForecast } = require('./forecast-analysis.js');
+const mongoose = require('mongoose');
 
 
 const dotenv = require('dotenv');
@@ -30,6 +31,10 @@ const rabbit = jackrabbit(process.env.RABBITMQ_URL);
 var exchange = rabbit.default();
 var forecastUpdate = exchange.queue({ name: 'forecast_update' });
 //  ---------------------------
+
+
+
+
 
 app.get('/point-forecast', async (req, res) => {
   try {
@@ -61,7 +66,39 @@ let server
 
 async function startServer() {
   try {
-    await connectToMongoDB();
+    // ------- CONNECT TO MONGODB --------
+
+    console.log("Attempting to connect to MongoDB...");
+    //const mongodbUri = 'mongodb+srv://admin:ay5HG8TYzT0MMsTx@cluster0.ml7brdd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+    const mongodbUri = 'mongodb://mongodb:27017/ocean';
+    //const mongodbUri = 'mongodb://127.0.0.1:27017/ocean';
+    mongoose.connect(mongodbUri).then(() => {
+      logger.info('Mongoose connected to MongoDB');
+      logger.info(`Mongoose connection ready state: ${mongoose.connection.readyState}`);
+    })
+    .catch((err) => {
+      logger.error('Mongoose connection error:', err);
+      process.exit(1);
+    });
+    
+    mongoose.connection.on('error', (err) => {
+      logger.error('Mongoose connection error:', err);
+      process.exit(1);
+    });
+
+    mongoose.connection.on('connected', () => {
+      console.log('Mongoose connected to MongoDB');
+    });
+
+    mongoose.connection.on('disconnected', () => {
+      console.log('MongoDB disconnected. Attempting to reconnect...');
+      mongoose.connect(mongodbUri, { useUnifiedTopology: true })
+    });
+
+    mongoose.connection.on('error', (err) => {
+      console.error('Mongoose connection error:', err);
+    });
+    // ------------------------------------
     server = app.listen(3100, () => {
       logger.info('Server is running on port 3100');
     });

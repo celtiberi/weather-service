@@ -3,6 +3,7 @@ const path = require('path');
 const fetch = require('node-fetch');
 const dotenv = require('dotenv');
 const { createLogger, nws } = require('../shared/module');
+const mongoose = require('mongoose');
 
 const logger = createLogger(
   'nws-forecast-service',
@@ -65,12 +66,15 @@ async function updateExpiredForecasts() {
 }
 
 async function updateForecastIfNecessary(expiredForecast) {
+  logger.info(`Updating forecast if necessary for zoneId: ${expiredForecast.zoneId}, zoneType: ${expiredForecast.zoneType}`);
   const fetchForecastFunction = expiredForecast.zoneType === 'high_seas' ? fetchHighSeasForecast : fetchForecast;
   const newForecast = await fetchForecastFunction(expiredForecast.zoneId, expiredForecast.zoneType);
   try {
     const newForecastExpiration = nws.getForecastExpirationTime(newForecast, expiredForecast.timeZone);
+    logger.info(`New forecast expiration time calculated for zoneId: ${expiredForecast.zoneId}`);
     await processNewForecast(expiredForecast, newForecast, newForecastExpiration);
   } catch (error) {
+    logger.error(`Error processing new forecast for zoneId: ${expiredForecast.zoneId}`, error);
     handleForecastExpirationError(expiredForecast, error);
   }
 }
@@ -446,6 +450,22 @@ async function fetchHighSeasForecast(zoneName) {
 
 async function initializeApp() {
   try {
+    // ------- CONNECT TO MONGODB --------\
+    // const mongodbUri = 'mongodb://127.0.0.1:27017/ocean';
+    //const mongodbUri = 'mongodb://mongodb:27017/ocean';
+
+    // mongoose.connect(mongodbUri)
+    // .then(() => {
+    //   console.log('Mongoose connection successful');
+    // })
+    // .catch((err) => {
+    //   console.error('Mongoose connection error:', err);
+    // });
+
+
+ 
+    // ------------------------------------
+
     fetchAndSaveAllForecasts();
 
     setInterval(updateExpiredForecasts, 5 * 60 * 1000);
@@ -457,6 +477,7 @@ async function initializeApp() {
 }
 
 if (require.main === module) {
+  
   initializeApp();
 }
 

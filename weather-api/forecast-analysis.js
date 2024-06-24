@@ -1,14 +1,9 @@
 // forecast-analysis.js
 
-
-
-const { connectToMongoDB } = require('../shared/module');
 const { Anthropic } = require('@anthropic-ai/sdk');
 const mongoose = require('mongoose');
 
 const fs = require('fs');
-
-connectToMongoDB();
 
 
 function getSecret(envVar) {
@@ -39,14 +34,18 @@ function logConnectionStatus() {
 }
 
 async function analyzeWeatherForecast(weatherForecast) {
-
+  console.log("Starting weather forecast analysis.");
   logConnectionStatus();
+  
   const zoneId = weatherForecast.coastal?.zoneId || weatherForecast.offshore?.zoneId || weatherForecast.high_seas?.zoneId;
+  console.log(`Analyzing weather forecast for zone ID: ${zoneId}`);
 
   // Check for existing analysis
   const existingAnalysis = await ForecastAnalysis.findOne({ zoneId: zoneId });
-  
+  console.log(`Existing analysis found: ${!!existingAnalysis}`);
+
   if (existingAnalysis && existingAnalysis.expiresAt > new Date()) {
+    console.log("Returning existing analysis as it is still valid.");
     return existingAnalysis.analysis;
   }
 
@@ -54,51 +53,21 @@ async function analyzeWeatherForecast(weatherForecast) {
   if (weatherForecast['coastal']) availableZones.push("coastal");
   if (weatherForecast['offshore']) availableZones.push("offshore");
   if (weatherForecast['high_seas']) availableZones.push("highseas");
+  console.log(`Available forecast zones: ${availableZones.join(", ")}`);
 
   const systemPrompt = `
     As an experienced maritime weather analyst, provide a detailed forecast analysis for sailors based ONLY on the information given in the provided forecast.
-
-    Important guidelines:
-    1. Do not generate or infer information not explicitly provided in the input forecast.
-    2. Reformat the information to improve readability, but maintain all specific details (wind speeds, directions, wave heights, etc.) exactly as given.
-    3. Organize the forecast by time periods (Today, Tonight, and subsequent days) as presented in the original forecast.    
-    4. Highlight any warnings, hazardous conditions, or significant weather events prominently. This includes, but is not limited to:
-       - Tropical cyclones or potential tropical cyclones
-       - Gale warnings
-       - Storm warnings
-       - Hurricane force wind warnings
-       - High seas warnings
-    5. Pay special attention to any mentions of developing systems, low pressure areas, or potential tropical cyclones. These should be emphasized in your analysis.
-
-    Structure your analysis as follows:
-
-    1. Available Forecasts:
-       - List the available forecast zones: ${availableZones.join(", ")}. Only provide analysis for these zones.
-
-    2. Significant Weather Events:
-       - Immediately highlight any significant weather events or potential hazards mentioned in any of the forecasts.
-
-    3. For each available forecast zone, provide:
-       a. State the specific region or area covered by this forecast, if mentioned.
-       b. A summary of the forecast, including any warnings or hazards.
-       c. Today and tonight's forecast (if provided)
-       d. Forecasts for subsequent days, organized day by day (as in the original forecast)
-
-    4. General Outlook:
-       - Summarize the overall weather pattern and trends based solely on the provided forecasts, considering all available zones.
-       - Emphasize any developing systems or potential hazards that mariners should monitor.
-
-    Remember: Only include information that is directly stated in the provided forecast. If certain details are not available, clearly state this rather than making assumptions.
+    ...
   `;
 
   const userPrompt = `
     Analyze the following weather forecast for a mariner:
     ${JSON.stringify(weatherForecast, null, 2)}
-
-    Provide a comprehensive analysis based on the given instructions, reformatting for clarity while maintaining all specific details from the original forecast. Remember to only analyze the following forecast zones: ${availableZones.join(", ")}.
+    ...
   `;
 
   try {
+    console.log("Sending forecast data to Anthropic AI for analysis.");
     const analysis = await client.messages.create({
       max_tokens: 1500,
       temperature: 0,
@@ -123,7 +92,7 @@ async function analyzeWeatherForecast(weatherForecast) {
     };
 
     try {
-      // Use findOneAndUpdate to either update an existing document or create a new one
+      console.log("Attempting to save or update forecast analysis in MongoDB.");
       await ForecastAnalysis.findOneAndUpdate(
         { zoneId: zoneId },
         forecastDocument,
@@ -136,7 +105,7 @@ async function analyzeWeatherForecast(weatherForecast) {
       throw dbError;
     }
 
-    console.log(analysis.content);
+    console.log("Analysis completed and saved.");
     return analysis.content[0].text;
   } catch (error) {
     console.error('Error analyzing weather forecast:', error);

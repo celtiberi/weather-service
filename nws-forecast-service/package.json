@@ -4,7 +4,7 @@
   "main": "index.js",
   "devDependencies": {
     "@pager/semantic-release-config": "2.x",
-    "chai": "^4.4.1",    
+    "chai": "^4.4.1",
     "eslint": "7.x",
     "eslint-config-hapi": "12.x",
     "eslint-plugin-hapi": "4.x",
@@ -20,18 +20,17 @@
     "@turf/turf": "^6.5.0",
     "amqplib": "^0.10.4",
     "chai-as-promised": "^7.1.1",
+    "dotenv": "^16.3.1",
     "fetch": "^1.1.0",
     "http": "^0.0.1-security",
-    "mongodb": "^6.5.0",
-    "mongoose": "^8.3.3",
+    "mongoose": "^8.4.3",
     "node-fetch": "^2.7.0",
     "path": "^0.12.7",
     "process": "^0.11.10",
     "shapefile": "^0.6.6",
     "tz-lookup": "^6.1.25",
     "url": "^0.11.3",
-    "weather-service-logger": "latest",
-    "dotenv": "^16.3.1"
+    "weather-service-logger": "latest"
   },
   "scripts": {
     "start": "node index.js",
