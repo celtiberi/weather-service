@@ -1,0 +1,26 @@
+FROM node:21.7.2
+
+# Set working directory
+WORKDIR /app
+
+# Copy shared module
+COPY shared /app/shared
+
+# Install dependencies for shared module
+WORKDIR /app/shared/module
+COPY shared/module/package*.json ./
+RUN npm install
+
+# Set working directory for the service
+WORKDIR /app/service
+
+# Copy package.json and install dependencies
+COPY weather-api/package*.json ./
+RUN npm install
+RUN npm install -g nodemon
+
+# The actual source code will be mounted as a volume
+
+EXPOSE 3100
+
+CMD ["nodemon", "--inspect=0.0.0.0:9229", "index.js"]

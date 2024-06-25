@@ -1,34 +1,53 @@
 # Variables
-DOCKER_COMPOSE = docker compose
+SERVICES := weather-api weather-web
+
+# Default target
+.DEFAULT_GOAL := help
 
 # Targets
-.PHONY: build up down logs restart clean
+.PHONY: build up down logs restart clean dev prod help
 
-build:
-	$(DOCKER_COMPOSE) build
+build: ## Build all services
+	docker compose build
 
-weather:
-	 docker-compose up --build weather-api
-up:
-	$(DOCKER_COMPOSE) up -d
+up: ## Start all services in detached mode
+	docker compose up -d
 
-down:
-	$(DOCKER_COMPOSE) down
+dev:
+	docker network create weather 2>/dev/null || true
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
 
-logs-all:
-	cd docker-elk && $(DOCKER_COMPOSE) logs -f
+prod: ## Start production environment
+	docker compose up --build -d
 
-logs:
-	 $(DOCKER_COMPOSE) logs -f $(filter-out $@,$(MAKECMDGOALS))
+down: ## Stop and remove all containers
+	docker compose down
 
+logs: ## View logs of all services or a specific service
+	@if [ "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
+		docker compose logs -f $(filter-out $@,$(MAKECMDGOALS)); \
+	else \
+		docker compose logs -f; \
+	fi
 
-restart:
-	$(DOCKER_COMPOSE) restart
+restart: ## Restart all services or a specific service
+	@if [ "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
+		docker compose restart $(filter-out $@,$(MAKECMDGOALS)); \
+	else \
+		docker compose restart; \
+	fi
 
-clean:
-	docker ps -q | xargs -r docker stop
+clean: ## Stop all containers and remove all volumes
+	docker ps -aq | xargs -r docker stop
 	docker system prune -a --volumes -f
 
-reup:
-	$(DOCKER_COMPOSE) build $(filter-out $@,$(MAKECMDGOALS))
-	$(DOCKER_COMPOSE) up -d $(filter-out $@,$(MAKECMDGOALS))
+reup: ## Rebuild and restart a specific service
+	docker compose build $(filter-out $@,$(MAKECMDGOALS))
+	docker compose up -d $(filter-out $@,$(MAKECMDGOALS))
+
+help: ## Display this help message
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+# Allow passing arguments to certain targets
+%:
+	@:

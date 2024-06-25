@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  weather-api:
+    build: 
+      context: .
+      dockerfile: ./weather-api/Dockerfile.dev
+    image: docker.io/celtiberi/weather-api:dev
+    container_name: weather-api-dev
+    volumes:
+      - ./weather-api:/app/service
+      - ./shared:/app/shared
+      - /app/service/node_modules
+      - /app/shared/module/node_modules
+    ports:
+      - "9229:9229"
+      - "3100:3100"
+    environment:
+      NODE_ENV: development
+      RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
+      MONGODB_URI: /run/secrets/mongodb_uri
+      LOGSTASH_HOST: localhost
+      LOGSTASH_PORT: 5044
+      ANTHROPIC_API_KEY: /run/secrets/anthropic_api_key
+    command: npm run dev
+    secrets:
+      - mongodb_uri
+      - anthropic_api_key
+    networks:
+      - weather
+
+  weather-web:
+    build: 
+      context: ./weather-web
+      dockerfile: Dockerfile.dev
+    image: docker.io/celtiberi/weather-web:dev
+    container_name: weather-web-dev
+    volumes:
+      - ./weather-web:/app
+      - /app/.next
+      - /app/node_modules
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_BASE_URL: "http://127.0.0.1:8080"
+    command: npm run dev
+    networks:
+      - weather
+
+# This should be at the root level, not under services
+networks:
+  weather:
+    name: weather
+    external: true

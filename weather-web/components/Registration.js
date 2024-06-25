@@ -17,58 +17,29 @@ const Registration = () => {
   }, []);
 
   const detectDeviceType = () => {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
-      ? 'mobile' 
-      : 'web';
+    // Implement your device detection logic here
+    return 'web'; // or 'mobile'
   };
 
   const setupWebPushNotifications = async (id) => {
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
-      try {
-        const registration = await navigator.serviceWorker.register('/service-worker.js');
-        const subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: 'YOUR_PUBLIC_VAPID_KEY'
-        });
-        await axios.post('/api/subscribe', { userId: id, subscription });
-      } catch (error) {
-        console.error('Web push notification setup failed:', error);
-      }
-    }
+    // Implement your web push notification setup here
+    console.log('Setting up web push notifications for user:', id);
   };
 
   const setupMobilePushNotifications = async (id) => {
-    // Implement mobile-specific push notification setup
-    // This will depend on the mobile framework you're using (e.g., React Native)
-    console.log('Mobile push notifications not yet implemented');
+    // Implement your mobile push notification setup here
+    console.log('Setting up mobile push notifications for user:', id);
   };
 
   const startPeriodicPositionUpdates = (id) => {
-    if ('geolocation' in navigator) {
-      const intervalId = setInterval(() => {
-        navigator.geolocation.getCurrentPosition(async (position) => {
-          try {
-            await axios.post('/api/updatePosition', {
-              userId: id,
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            });
-          } catch (error) {
-            console.error('Failed to update position:', error);
-          }
-        }, (error) => {
-          console.error('Geolocation error:', error);
-        });
-      }, 15 * 60 * 1000); // Update every 15 minutes
-
-      localStorage.setItem('positionUpdateIntervalId', intervalId.toString());
-    }
+    // Implement your periodic position update logic here
+    console.log('Starting periodic position updates for user:', id);
   };
 
   const registerUser = async (id) => {
     try {
       const deviceType = detectDeviceType();
-      await axios.post('/api/register', { userId: id, deviceType });
+      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/api/register`, { userId: id, deviceType });
       
       if (deviceType === 'web') {
         await setupWebPushNotifications(id);
@@ -80,14 +51,15 @@ const Registration = () => {
       
       setIsRegistered(true);
       setUserId(id);
+      localStorage.setItem('userId', id);
     } catch (error) {
       console.error('Registration failed:', error);
+      // Handle registration error (e.g., show error message to user)
     }
   };
 
   const handleRegister = async () => {
     const id = uuidv4();
-    localStorage.setItem('userId', id);
     await registerUser(id);
     setShowModal(false);
     setShowConfirmation(true);
@@ -95,18 +67,30 @@ const Registration = () => {
 
   const handleUnregister = async () => {
     try {
-      await axios.post('/api/unregister', { userId });
-      localStorage.removeItem('userId');
-      const intervalId = localStorage.getItem('positionUpdateIntervalId');
-      if (intervalId) {
-        clearInterval(parseInt(intervalId));
-        localStorage.removeItem('positionUpdateIntervalId');
-      }
-      setIsRegistered(false);
-      setUserId(null);
+      const unregisterUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/api/unregister`;
+      console.log(`Calling API URL: ${unregisterUrl}`);
+      console.log(`Unregistering user with ID: ${userId} at URL: ${unregisterUrl}`);
+      await axios.post(unregisterUrl, { userId });
+      
+      completeUnregistration();
     } catch (error) {
-      console.error('Unregistration failed:', error);
+      if (error.response && error.response.status === 404) {
+        console.log('User not found on server, proceeding with client-side unregistration');
+        completeUnregistration();
+      } else {
+        console.error('Unregistration failed:', error);
+        // Handle other types of errors here (e.g., show error message to user)
+      }
     }
+  };
+
+  const completeUnregistration = () => {
+    localStorage.removeItem('userId');
+    clearInterval(parseInt(localStorage.getItem('positionUpdateIntervalId')));
+    localStorage.removeItem('positionUpdateIntervalId');
+    setIsRegistered(false);
+    setUserId(null);
+    setShowConfirmation(false);  // Reset confirmation state
   };
 
   return (
@@ -137,7 +121,60 @@ const Registration = () => {
         )}
       </div>
 
-      {/* ... (keep the modal and confirmation popup code as before) */}
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" id="my-modal">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">Confirm Registration</h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500">
+                  Are you sure you want to register for weather alerts?
+                </p>
+              </div>
+              <div className="items-center px-4 py-3">
+                <button
+                  id="ok-btn"
+                  className="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  onClick={handleRegister}
+                >
+                  Register
+                </button>
+                <button
+                  id="cancel-btn"
+                  className="mt-3 px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  onClick={() => setShowModal(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showConfirmation && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" id="confirmation-modal">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">Registration Successful</h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500">
+                  You have successfully registered for weather alerts.
+                </p>
+              </div>
+              <div className="items-center px-4 py-3">
+                <button
+                  id="ok-btn"
+                  className="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  onClick={() => setShowConfirmation(false)}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

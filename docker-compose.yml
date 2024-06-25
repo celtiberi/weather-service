@@ -147,7 +147,6 @@ services:
         condition: service_started
     environment:
       NEXT_PUBLIC_API_BASE_URL: "http://207.5.194.71:8080"
-      ANTHROPIC_API_KEY: /run/secrets/anthropic_api_key
     secrets:
       - anthropic_api_key
     volumes:
@@ -177,7 +176,7 @@ volumes:
 
 networks:
   weather:
-    driver: bridge
+    external: true
   
 secrets:
   mongodb_uri:

@@ -72,9 +72,38 @@
           "host": ["boat-api:3000"]
         }
       ]
+    },
+    {
+      "endpoint": "/v1/api/register",
+      "method": "POST",
+      "backend": [
+        {
+          "url_pattern": "/api/register",
+          "method": "POST",
+          "host": ["weather-api:3100"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/v1/api/unregister",
+      "method": "POST",
+      "output_encoding": "no-op",
+      "backend": [
+        {
+          "url_pattern": "/api/unregister",
+          "method": "POST",
+          "host": ["weather-api:3100"]
+        }
+      ]
     }
   ],
   "extra_config": {
+    "telemetry/logging": {
+      "level": "DEBUG",
+      "prefix": "[KRAKEND]",
+      "syslog": false,
+      "stdout": true
+    },
     "router": {
       "auto_options": true
     },

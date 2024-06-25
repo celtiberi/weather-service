@@ -1,38 +1,42 @@
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Application specific logging, throwing an error, or other logic here
+});
+
 const express = require('express');
 const jackrabbit = require('@pager/jackrabbit');
 const path = require('path');
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+const morgan = require('morgan');
 const { createLogger, nws } = require('../shared/module');
 const { analyzeWeatherForecast } = require('./forecast-analysis.js');
-const mongoose = require('mongoose');
 
-
-const dotenv = require('dotenv');
-const getDotEnvPath = (env) => {
-  if (env === 'TEST') {
-    return '.env.test';
-  }
-  return '.env';
-};
+// Load environment variables
+const getDotEnvPath = (env) => env === 'TEST' ? '.env.test' : '.env';
 dotenv.config({ path: path.resolve(process.cwd(), getDotEnvPath(process.env.NODE_ENV?.toUpperCase())) });
 
+// Set up logger
 const logger = createLogger('weather-api', process.env.LOGSTASH_PORT || 5044);
-logger.info('Hello, weather-api');
 
+// Initialize Express app
 const app = express();
 app.use(express.json());
 
+// Set up morgan for HTTP request logging
+app.use(morgan('dev'));
 
+// RabbitMQ setup
 logger.info(`RABBITMQ_URL: ${process.env.RABBITMQ_URL}`);
-
-// ------- RABBIT SETUP -------
-// TODO not sure I need this here.  Maybe just in the push notification code when I make it?
-// When I am track a boats waypoints I will need it in that code as well.
 const rabbit = jackrabbit(process.env.RABBITMQ_URL);
-var exchange = rabbit.default();
-var forecastUpdate = exchange.queue({ name: 'forecast_update' });
-//  ---------------------------
+const exchange = rabbit.default();
 
-
+// MongoDB User Schema
 const userSchema = new mongoose.Schema({
   userId: String,
   lastPosition: {
@@ -45,8 +49,9 @@ const userSchema = new mongoose.Schema({
   registeredAt: { type: Date, default: Date.now }
 });
 
+const User = mongoose.model('User', userSchema);
 
-
+// API Routes
 app.get('/point-forecast', async (req, res) => {
   try {
     logger.info(`[GET] /point-forecast with lat: ${req.query.lat} and lon: ${req.query.lon}`);
@@ -56,15 +61,13 @@ app.get('/point-forecast', async (req, res) => {
       lon: parseFloat(req.query.lon),
     };
 
-    let forecasts = await nws.getPointForecasts(coordinate.lat, coordinate.lon)
+    let forecasts = await nws.getPointForecasts(coordinate.lat, coordinate.lon);
     
-    if (!forecasts && (!forecasts['coastal'] && !forecasts['offshore'] && !forecasts['high_seas']))
-    {
-      res.status(404).send("No forecast available for the selected location.");
-      return;
+    if (!forecasts || (!forecasts['coastal'] && !forecasts['offshore'] && !forecasts['high_seas'])) {
+      return res.status(404).send("No forecast available for the selected location.");
     }
 
-    forecastsAnalysis = await analyzeWeatherForecast(forecasts);
+    const forecastsAnalysis = await analyzeWeatherForecast(forecasts);
     res.json({ forecastsAnalysis, forecasts });
     
   } catch (error) {
@@ -73,52 +76,78 @@ app.get('/point-forecast', async (req, res) => {
   }
 });
 
-let server
+app.post('/api/register', async (req, res) => {
+  const { userId, deviceType } = req.body;
 
+  if (!userId || !deviceType) {
+    return res.status(400).json({ error: 'User ID and device type are required' });
+  }
+
+  try {
+    await User.findOneAndUpdate(
+      { userId },
+      { userId, deviceType },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    res.status(200).json({ message: 'User registered successfully' });
+  } catch (error) {
+    logger.error('Error during registration:', error);
+    res.status(500).json({ error: 'An error occurred during registration' });
+  }
+});
+
+app.post('/api/unregister', async (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
+  try {
+    const result = await User.findOneAndDelete({ userId });
+
+    if (!result) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.status(200).json({ message: 'User unregistered successfully' });
+  } catch (error) {
+    logger.error('Error during unregistration:', error);
+    res.status(500).json({ error: 'An error occurred during unregistration' });
+  }
+});
+
+// Server startup
+let server;
 async function startServer() {
   try {
-    // ------- CONNECT TO MONGODB --------
-
-    console.log("Attempting to connect to MongoDB...");
-    //const mongodbUri = 'mongodb+srv://admin:ay5HG8TYzT0MMsTx@cluster0.ml7brdd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
     const mongodbUri = 'mongodb://mongodb:27017/ocean';
-    //const mongodbUri = 'mongodb://127.0.0.1:27017/ocean';
-    mongoose.connect(mongodbUri).then(() => {
-      logger.info('Mongoose connected to MongoDB');
-      logger.info(`Mongoose connection ready state: ${mongoose.connection.readyState}`);
-    })
-    .catch((err) => {
-      logger.error('Mongoose connection error:', err);
-      process.exit(1);
-    });
-    
-    mongoose.connection.on('error', (err) => {
-      logger.error('Mongoose connection error:', err);
-      process.exit(1);
-    });
+    await mongoose.connect(mongodbUri);
+    logger.info('Mongoose connected to MongoDB');
 
-    mongoose.connection.on('connected', () => {
-      console.log('Mongoose connected to MongoDB');
-    });
-
-    mongoose.connection.on('disconnected', () => {
-      console.log('MongoDB disconnected. Attempting to reconnect...');
-      mongoose.connect(mongodbUri, { useUnifiedTopology: true })
-    });
-
-    mongoose.connection.on('error', (err) => {
-      console.error('Mongoose connection error:', err);
-    });
-    // ------------------------------------
     server = app.listen(3100, () => {
       logger.info('Server is running on port 3100');
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    logger.error('Failed to start server:', error);
     process.exit(1);
   }
 }
 
+// MongoDB connection event handlers
+mongoose.connection.on('error', (err) => {
+  logger.error('Mongoose connection error:', err);
+  process.exit(1);
+});
+
+mongoose.connection.on('disconnected', () => {
+  logger.info('MongoDB disconnected. Attempting to reconnect...');
+  mongoose.connect(mongodbUri, { useUnifiedTopology: true });
+});
+
+
+
+// Start the server
 startServer();
 
 module.exports = server;
