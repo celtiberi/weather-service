@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import dynamic from 'next/dynamic';
 import Registration from '../components/Registration';
@@ -24,6 +24,20 @@ const Home = () => {
   const [error, setError] = useState(null);
   const [activeForecastType, setActiveForecastType] = useState(ForecastType.COASTAL);
   const [userId, setUserId] = useState(localStorage.getItem('userId'));
+  const [userPosition, setUserPosition] = useState(null);
+
+  useEffect(() => {
+    // Function to update user position
+    const updateUserPosition = (position) => {
+      setUserPosition([position.coords.latitude, position.coords.longitude]);
+    };
+
+    // Watch user's position
+    const watchId = navigator.geolocation.watchPosition(updateUserPosition);
+
+    // Cleanup
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
 
   const handleLocationClick = async (latlng) => {
     setCoordinates(latlng);
@@ -48,7 +62,6 @@ const Home = () => {
       setLoading(false);
     }
   };
-
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -76,7 +89,7 @@ const Home = () => {
       </div>
 
       <div className="h-[300px] sm:h-[400px] w-full">
-        <Map onLocationClick={handleLocationClick} />
+        <Map onLocationClick={handleLocationClick} userPosition={userPosition} />
       </div>
       
       {coordinates && (
