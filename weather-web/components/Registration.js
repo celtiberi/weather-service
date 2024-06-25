@@ -1,3 +1,4 @@
+// Registration.js
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
@@ -16,39 +17,10 @@ const Registration = () => {
     }
   }, []);
 
-  const detectDeviceType = () => {
-    // Implement your device detection logic here
-    return 'web'; // or 'mobile'
-  };
-
-  const setupWebPushNotifications = async (id) => {
-    // Implement your web push notification setup here
-    console.log('Setting up web push notifications for user:', id);
-  };
-
-  const setupMobilePushNotifications = async (id) => {
-    // Implement your mobile push notification setup here
-    console.log('Setting up mobile push notifications for user:', id);
-  };
-
-  const startPeriodicPositionUpdates = (id) => {
-    // Implement your periodic position update logic here
-    console.log('Starting periodic position updates for user:', id);
-  };
-
   const registerUser = async (id) => {
     try {
-      const deviceType = detectDeviceType();
-      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/api/register`, { userId: id, deviceType });
-      
-      if (deviceType === 'web') {
-        await setupWebPushNotifications(id);
-      } else {
-        await setupMobilePushNotifications(id);
-      }
-
-      startPeriodicPositionUpdates(id);
-      
+      const deviceType = 'web'; // Or implement device detection logic
+      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/register`, { userId: id, deviceType });
       setIsRegistered(true);
       setUserId(id);
       localStorage.setItem('userId', id);
@@ -67,11 +39,8 @@ const Registration = () => {
 
   const handleUnregister = async () => {
     try {
-      const unregisterUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/api/unregister`;
-      console.log(`Calling API URL: ${unregisterUrl}`);
-      console.log(`Unregistering user with ID: ${userId} at URL: ${unregisterUrl}`);
+      const unregisterUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/unregister`;
       await axios.post(unregisterUrl, { userId });
-      
       completeUnregistration();
     } catch (error) {
       if (error.response && error.response.status === 404) {
@@ -86,11 +55,9 @@ const Registration = () => {
 
   const completeUnregistration = () => {
     localStorage.removeItem('userId');
-    clearInterval(parseInt(localStorage.getItem('positionUpdateIntervalId')));
-    localStorage.removeItem('positionUpdateIntervalId');
     setIsRegistered(false);
     setUserId(null);
-    setShowConfirmation(false);  // Reset confirmation state
+    setShowConfirmation(false);
   };
 
   return (

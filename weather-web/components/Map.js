@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { MapContainer, TileLayer, useMapEvents, Marker } from 'react-leaflet';
+import { MapContainer, TileLayer, useMapEvents, Marker, ScaleControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -34,13 +34,23 @@ const Map = ({ onLocationClick }) => {
 
   return (
     <MapContainer
-      center={[40, -100]}
-      zoom={4}
+      center={[30, -40]}  // Centered more on the Atlantic Ocean
+      zoom={3}
       style={{ height: '100%', width: '100%' }}
     >
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      {/* Base map layer */}
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      />
+      {/* OpenSeaMap layer */}
+      <TileLayer
+        url="https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="http://www.openseamap.org">OpenSeaMap</a> contributors'
+      />
       <MapEvents />
       {marker && <Marker position={marker} icon={customIcon} />}
+      <ScaleControl position="bottomleft" imperial={false} />
     </MapContainer>
   );
 };

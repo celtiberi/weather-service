@@ -30,7 +30,7 @@
       ]
     },
     {
-      "endpoint": "/v1/point-forecast/{lat}/{lon}",
+      "endpoint": "/api/v1/point-forecast/{lat}/{lon}",
       "method": "GET",
       "backend": [
         {
@@ -41,56 +41,33 @@
       ]
     },
     {
-      "endpoint": "/v1/boats",
+      "endpoint": "/api/v1/register",
       "method": "POST",
       "backend": [
         {
-          "url_pattern": "/boats",
-          "method": "POST",
-          "host": ["boat-api:3000"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/v1/boats/{boatId}/waypoints",
-      "method": "PUT",
-      "backend": [
-        {
-          "url_pattern": "/boats/{boatId}/waypoints",
-          "method": "PUT",
-          "host": ["boat-api:3000"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/v1/boats/{boatId}/location",
-      "method": "PUT",
-      "backend": [
-        {
-          "url_pattern": "/boats/{boatId}/location",
-          "method": "PUT",
-          "host": ["boat-api:3000"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/v1/api/register",
-      "method": "POST",
-      "backend": [
-        {
-          "url_pattern": "/api/register",
+          "url_pattern": "/register",
           "method": "POST",
           "host": ["weather-api:3100"]
         }
       ]
     },
     {
-      "endpoint": "/v1/api/unregister",
+      "endpoint": "/api/v1/unregister",
       "method": "POST",
-      "output_encoding": "no-op",
       "backend": [
         {
-          "url_pattern": "/api/unregister",
+          "url_pattern": "/unregister",
+          "method": "POST",
+          "host": ["weather-api:3100"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/v1/update-position",
+      "method": "POST",
+      "backend": [
+        {
+          "url_pattern": "/update-position",
           "method": "POST",
           "host": ["weather-api:3100"]
         }

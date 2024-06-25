@@ -4,6 +4,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import dynamic from 'next/dynamic';
 import Registration from '../components/Registration';
+import PositionUpdater from '../components/PositionUpdater';
 
 const Map = dynamic(() => import('../components/Map'), {
   ssr: false,
@@ -22,13 +23,14 @@ const Home = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeForecastType, setActiveForecastType] = useState(ForecastType.COASTAL);
+  const [userId, setUserId] = useState(localStorage.getItem('userId'));
 
   const handleLocationClick = async (latlng) => {
     setCoordinates(latlng);
     setLoading(true);
     setError(null);
-    const baseUrl = "http://207.5.194.71:8080"; // Hardcoded as environment variable is not populating
-    const url = `${baseUrl}/v1/point-forecast/${latlng.lat}/${latlng.lng}`;
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const url = `${baseUrl}/api/v1/point-forecast/${latlng.lat}/${latlng.lng}`;
     try {
       const response = await axios.get(url);
       setForecast(response.data.forecasts);
@@ -47,11 +49,13 @@ const Home = () => {
     }
   };
 
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold text-center sm:text-left">Weather Forecast</h1>
       
       <Registration />
+      {userId && <PositionUpdater userId={userId} />}
       
       <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
         <h2 className="text-xl font-semibold mb-2">NWS Marine Weather Analysis</h2>

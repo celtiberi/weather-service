@@ -76,7 +76,7 @@ app.get('/point-forecast', async (req, res) => {
   }
 });
 
-app.post('/api/register', async (req, res) => {
+app.post('/register', async (req, res) => {
   const { userId, deviceType } = req.body;
 
   if (!userId || !deviceType) {
@@ -96,7 +96,7 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-app.post('/api/unregister', async (req, res) => {
+app.post('/unregister', async (req, res) => {
   const { userId } = req.body;
 
   if (!userId) {
@@ -114,6 +114,37 @@ app.post('/api/unregister', async (req, res) => {
   } catch (error) {
     logger.error('Error during unregistration:', error);
     res.status(500).json({ error: 'An error occurred during unregistration' });
+  }
+});
+
+app.post('/update-position', async (req, res) => {
+  const { userId, latitude, longitude } = req.body;
+
+  if (!userId || latitude === undefined || longitude === undefined) {
+    return res.status(400).json({ error: 'User ID, latitude, and longitude are required' });
+  }
+
+  try {
+    const result = await User.findOneAndUpdate(
+      { userId },
+      { 
+        $set: { 
+          'lastPosition.lat': latitude,
+          'lastPosition.lng': longitude,
+          'lastPosition.updatedAt': new Date()
+        }
+      },
+      { new: true }
+    );
+
+    if (!result) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.status(200).json({ message: 'Position updated successfully' });
+  } catch (error) {
+    logger.error('Error updating position:', error);
+    res.status(500).json({ error: 'An error occurred while updating position' });
   }
 });
 
