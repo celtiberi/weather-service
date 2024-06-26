@@ -44,9 +44,15 @@ async function analyzeWeatherForecast(weatherForecast) {
   const existingAnalysis = await ForecastAnalysis.findOne({ zoneId: zoneId });
   console.log(`Existing analysis found: ${!!existingAnalysis}`);
 
-  if (existingAnalysis && existingAnalysis.expiresAt > new Date()) {
-    console.log("Returning existing analysis as it is still valid.");
-    return existingAnalysis.analysis;
+  if (existingAnalysis) {
+    if (existingAnalysis.expiresAt > new Date()) {
+      console.log("Returning existing analysis as it is still valid.");
+      return existingAnalysis.analysis;
+    } else {
+      console.log("Existing analysis is not valid as it has expired.");
+      console.log("Deleting expired analysis from the database.");
+      await ForecastAnalysis.deleteOne({ zoneId: zoneId });
+    }
   }
 
   const availableZones = [];
@@ -83,7 +89,7 @@ async function analyzeWeatherForecast(weatherForecast) {
         .filter(zone => weatherForecast[zone])
         .map(zone => new Date(weatherForecast[zone].expires).getTime())
     );
-
+    console.log(`Smallest expiration time: ${new Date(smallestExpiration).toISOString()}`);
     const forecastDocument = {
       zoneId: zoneId,
       analysis: analysis.content[0].text,

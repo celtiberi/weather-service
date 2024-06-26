@@ -1,24 +1,35 @@
 const shapefile = require('shapefile');
 const turf = require('@turf/turf');
 const path = require('path');
-const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const tzlookup = require("tz-lookup");
 const moment = require('moment-timezone');
+const mongoose = require('mongoose');
 
-console.log("Attempting to connect to MongoDB...");
-//const mongodbUri = 'mongodb+srv://admin:ay5HG8TYzT0MMsTx@cluster0.ml7brdd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
- const mongodbUri = 'mongodb://mongodb:27017/ocean';
-//const mongodbUri = 'mongodb://127.0.0.1:27017/ocean';
-mongoose.connect(mongodbUri)
-.then(() => {
+// TODO I have not been able to solve the problem of how to only have one mongodb connection.
+// I think the issue is that there are multiple node_modules... shared/module and nws-forecast-service/node_modules
+// I need to find out how to consolidate the mongodb connection so that it is not duplicated in each module
+// TODO make shared/module an actual npm package instead of trying to copy the code around.  This would fix
+//   the issue
+const mongodbUri = 'mongodb://mongodb:27017/ocean';
+mongoose.connect(mongodbUri, {
+  serverSelectionTimeoutMS: 30000,
+  socketTimeoutMS: 45000,
+}).then(() => {
   console.log('Mongoose connected to MongoDB');
   console.log(`Mongoose connection ready state: ${mongoose.connection.readyState}`);
-})
-.catch((err) => {
-  console.error('Mongoose connection error:', err);
-  process.exit(1);
+}).catch((error) => {
+  console.error('Error connecting to MongoDB:', error);
 });
+
+mongoose.connection.on('disconnected', () => {
+  console.log('Disconnected from MongoDB');
+});
+
+mongoose.connection.on('error', (error) => {
+  console.error('MongoDB connection error:', error);
+});
+
 
 const getDotEnvPath = (env) => {
   if (env === 'TEST') {
@@ -56,10 +67,9 @@ const forecastSchema = new mongoose.Schema({
   expires: {
     type: Date,
     required: true,
-  },
+  }
 });
 
-// Create the forecast model
 const Forecast = mongoose.model('Forecast', forecastSchema);
 
 const forecastCollection = mongoose.connection.collection('forecasts');
@@ -240,50 +250,40 @@ async function getLocalTimeForZone(zoneId, zoneType) {
   return timeZone;
 }
 
-// timeZone will be somethign like "America/Nassau"
 function getForecastExpirationTime(forecast, timeZone) {
-  let issuedAt = moment().tz(timeZone);
-  let expiresAt = moment(issuedAt).add(6, 'hours');
+  logger.debug(`Parsing forecast for timezone: ${timeZone}`);
+  logger.debug(`Forecast text (first 200 chars): ${forecast.substring(0, 200)}...`);
 
-  const issuedAtMatch = forecast.match(/(?<time>\d{4})\s+UTC\s+(?<dayOfWeek>\w{3})\s+(?<month>\w{3})\s+(?<day>\d{1,2})\s+(?<year>\d{4})/);
-  if (issuedAtMatch) {
-    const { time, dayOfWeek, month, day, year } = issuedAtMatch.groups;
-    const [hours, minutes] = time.match(/(\d{2})(\d{2})/).slice(1);
-    issuedAt = moment.tz(`${year}-${month}-${day} ${hours}:${minutes}`, 'YYYY-MMM-DD HH:mm', 'UTC').tz(timeZone);
-    expiresAt = moment(issuedAt).add(6, 'hours');
-  } else {
-    console.log('Issue time not found in the forecast. Using current time as default.');
-  }
+  let expiresAt;
 
-  const expiresInMatch = forecast.match(/SUPERSEDED BY NEXT ISSUANCE IN (\d+) HOURS/);
-  if (expiresInMatch) {
-    const expiresInHours = parseInt(expiresInMatch[1]);
-    expiresAt = moment(issuedAt).add(expiresInHours, 'hours');
+  const expiresAtMatch = forecast.match(/Expires:(\d{12})/);
+  if (expiresAtMatch) {
+    const expiresAtString = expiresAtMatch[1];
+    expiresAt = moment.tz(expiresAtString, 'YYYYMMDDHHmm', timeZone).utc();
+    logger.debug(`Parsed expiration time: ${expiresAt.format()}`);
   } else {
-    const expiresAtMatch = forecast.match(/Expires:(\d{12})/);
-    if (expiresAtMatch) {
-      const expiresAtString = expiresAtMatch[1];
-      const expiresAtYear = parseInt(expiresAtString.slice(0, 4));
-      const expiresAtMonth = parseInt(expiresAtString.slice(4, 6)) - 1;
-      const expiresAtDay = parseInt(expiresAtString.slice(6, 8));
-      const expiresAtHour = parseInt(expiresAtString.slice(8, 10));
-      const expiresAtMinute = parseInt(expiresAtString.slice(10, 12));
-      console.log(`Expiry time: ${expiresAtYear}-${expiresAtMonth + 1}-${expiresAtDay} ${expiresAtHour}:${expiresAtMinute}`);
-      expiresAt = moment.tz(`${expiresAtYear}-${expiresAtMonth + 1}-${expiresAtDay} ${expiresAtHour}:${expiresAtMinute}`, 'YYYY-M-D HH:mm', timeZone);
+    const expiresInMatch = forecast.match(/SUPERSEDED BY NEXT ISSUANCE IN (\d+) HOURS/);
+    if (expiresInMatch) {
+      const expiresInHours = parseInt(expiresInMatch[1]);
+      expiresAt = moment().tz(timeZone).add(expiresInHours, 'hours').utc();
+      logger.debug(`Expiration set to ${expiresInHours} hours from now`);
     } else {
-      console.log('Expiry time not found in the forecast. Using default expiry time of 6 hours.');
+      logger.warn(`Expiry time not found in the forecast. Using default expiry time of 6 hours.`);
+      expiresAt = moment().tz(timeZone).add(6, 'hours').utc();
     }
   }
 
-  if (!issuedAt.isValid() || !expiresAt.isValid()) {
-    throw new Error(`issuedAt: ${issuedAt}, expiresAt: ${expiresAt}, forecast: ${forecast}`);
+  if (!expiresAt.isValid()) {
+    throw new Error(`Invalid expiration date: ${expiresAt.format()}`);
   }
 
-  const now = moment().tz(timeZone);
-  if (expiresAt.isBefore(issuedAt) || now.diff(expiresAt, 'milliseconds') > 24 * 60 * 60 * 1000) {
-    throw new Error('Stale forecast. This forecast should be ignored.');
+  const now = moment().utc();
+  if (expiresAt.isBefore(now)) {
+    logger.warn(`Calculated expiration time is in the past. Adjusting to 1 hour from now.`);
+    expiresAt = moment(now).add(1, 'hour');
   }
 
+  logger.info(`Final expiration time (UTC): ${expiresAt.format()}`);
   return expiresAt.toDate();
 }
 

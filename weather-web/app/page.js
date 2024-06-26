@@ -5,6 +5,7 @@ import axios from 'axios';
 import dynamic from 'next/dynamic';
 import Registration from '../components/Registration';
 import PositionUpdater from '../components/PositionUpdater';
+import moment from 'moment';
 
 const Map = dynamic(() => import('../components/Map'), {
   ssr: false,
@@ -23,7 +24,7 @@ const Home = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeForecastType, setActiveForecastType] = useState(ForecastType.COASTAL);
-  const [userId, setUserId] = useState(localStorage.getItem('userId'));
+  const [userId, setUserId] = useState(typeof window !== 'undefined' ? localStorage.getItem('userId') : null);
   const [userPosition, setUserPosition] = useState(null);
 
   useEffect(() => {
@@ -60,6 +61,20 @@ const Home = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const formatExpirationTime = (expiresDate) => {
+    const expires = moment(expiresDate);
+    const now = moment();
+    const diffHours = expires.diff(now, 'hours');
+    
+    if (diffHours < 0) {
+      return `Expired ${Math.abs(diffHours)} hours ago`;
+    } else if (diffHours === 0) {
+      return `Expires in less than an hour`;
+    } else {
+      return `Expires in ${diffHours} hours`;
     }
   };
 
@@ -108,9 +123,19 @@ const Home = () => {
           <span className="block sm:inline">{error}</span>
         </div>
       )}
-      {forecastAnalysis && (
+      {forecastAnalysis && forecast && (
         <div className="bg-blue-100 p-4 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-2">Forecast Analysis</h2>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">Forecast Expiration Times:</h3>
+            {Object.entries(forecast).map(([type, forecastData]) => (
+              forecastData && (
+                <p key={type} className="text-sm text-gray-600">
+                  <span className="capitalize">{type.replace('_', ' ')}</span>: {formatExpirationTime(forecastData.expires)}
+                </p>
+              )
+            ))}
+          </div>
           <p className="whitespace-pre-wrap">{forecastAnalysis}</p>
         </div>
       )}

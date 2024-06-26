@@ -154,6 +154,7 @@ async function startServer() {
   try {
     const mongodbUri = 'mongodb://mongodb:27017/ocean';
     await mongoose.connect(mongodbUri);
+    
     logger.info('Mongoose connected to MongoDB');
 
     server = app.listen(3100, () => {

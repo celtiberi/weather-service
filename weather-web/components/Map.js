@@ -61,7 +61,7 @@ const Map = ({ onLocationClick, userPosition }) => {
     if (userPosition) {
       setMapCenter(userPosition);
     }
-  }, [userPosition]);
+  }, []);
 
   return (
     <MapContainer
