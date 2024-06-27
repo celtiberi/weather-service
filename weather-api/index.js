@@ -17,7 +17,14 @@ const morgan = require('morgan');
 const { createLogger, nws } = require('../shared/module');
 const { analyzeWeatherForecast } = require('./forecast-analysis.js');
 const { fetchRssData, downloadShapefiles, readShapefiles } = require('./cyclone-data.js');
+const cors = require('cors');
 
+// Enable CORS for all routes
+app.use(cors({
+  origin: ['http://207.5.194.71:3000', 'http://localhost:3000'], // Add any other origins you need
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Load environment variables
 const getDotEnvPath = (env) => env === 'TEST' ? '.env.test' : '.env';
