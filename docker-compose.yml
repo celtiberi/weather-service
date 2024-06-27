@@ -98,6 +98,8 @@ services:
     volumes:
       - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
       - ./definitions.json:/etc/rabbitmq/definitions.json
+    environment:
+      RABBITMQ_ERLANG_COOKIE: XAHKJLASDHIUW128361287ASDJHKASD
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
       interval: 10s

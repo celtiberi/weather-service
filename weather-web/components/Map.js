@@ -6,6 +6,7 @@ import L from 'leaflet';
 const Map = ({ onLocationClick, userPosition }) => {
   const [marker, setMarker] = useState(null);
   const [mapCenter, setMapCenter] = useState([30, -40]);
+  const [cycloneShapefiles, setCycloneShapefiles] = useState(null);
 
   // Create a custom icon for click markers
   const customIcon = useMemo(
@@ -39,6 +40,21 @@ const Map = ({ onLocationClick, userPosition }) => {
     []
   );
 
+  useEffect(() => {
+    const fetchCycloneData = async () => {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+        const shapefilesResponse = await fetch(`${baseUrl}/api/v1/cyclone-shapefiles`);
+        const shapefilesData = await shapefilesResponse.json();
+        setCycloneShapefiles(shapefilesData);
+      } catch (error) {
+        console.error('Error fetching cyclone data:', error);
+      }
+    };
+
+    fetchCycloneData();
+  }, []);
+
   const MapEvents = () => {
     const map = useMap();
     useMapEvents({
@@ -57,11 +73,37 @@ const Map = ({ onLocationClick, userPosition }) => {
     return null;
   };
 
+  const CycloneLayer = () => {
+    const map = useMap();
+
+    useEffect(() => {
+      if (cycloneShapefiles) {
+        Object.entries(cycloneShapefiles).forEach(([name, features]) => {
+          L.geoJSON(features, {
+            style: {
+              color: '#FF0000',
+              weight: 2,
+              opacity: 0.7
+            },
+            onEachFeature: (feature, layer) => {
+              if (feature.properties) {
+                layer.bindPopup(`<pre>${JSON.stringify(feature.properties, null, 2)}</pre>`);
+              }
+            }
+          }).addTo(map);
+        });
+      }
+    }, [map, cycloneShapefiles]);
+
+    return null;
+  };
+
   useEffect(() => {
     if (userPosition) {
       setMapCenter(userPosition);
     }
-  }, []);
+  }, [userPosition]);
+
 
   return (
     <MapContainer
@@ -69,17 +111,16 @@ const Map = ({ onLocationClick, userPosition }) => {
       zoom={3}
       style={{ height: '100%', width: '100%' }}
     >
-      {/* Base map layer */}
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
-      {/* OpenSeaMap layer */}
       <TileLayer
         url="https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
         attribution='&copy; <a href="http://www.openseamap.org">OpenSeaMap</a> contributors'
       />
       <MapEvents />
+      <CycloneLayer />
       {marker && <Marker position={marker} icon={customIcon} />}
       {userPosition && <Marker position={userPosition} icon={boatIcon} />}
       <ScaleControl position="bottomleft" imperial={false} />

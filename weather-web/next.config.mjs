@@ -1,4 +1,17 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {};
+// next.config.mjs
 
-export default nextConfig;
+const nextConfig = {
+    images: {
+      remotePatterns: [
+        {
+          protocol: 'https',
+          hostname: 'www.nhc.noaa.gov',
+          port: '',
+          pathname: '/xgtwo/**',
+        },
+      ],
+    },
+    // ... other existing configurations
+  };
+  
+  export default nextConfig;

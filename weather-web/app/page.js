@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import Registration from '../components/Registration';
 import PositionUpdater from '../components/PositionUpdater';
 import moment from 'moment';
+import CycloneInfo from '../components/CycloneInfo';
 
 const Map = dynamic(() => import('../components/Map'), {
   ssr: false,
@@ -26,6 +27,8 @@ const Home = () => {
   const [activeForecastType, setActiveForecastType] = useState(ForecastType.COASTAL);
   const [userId, setUserId] = useState(typeof window !== 'undefined' ? localStorage.getItem('userId') : null);
   const [userPosition, setUserPosition] = useState(null);
+  const [isCycloneInfoOpen, setIsCycloneInfoOpen] = useState(false);
+  const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
 
   useEffect(() => {
     // Function to update user position
@@ -78,6 +81,23 @@ const Home = () => {
     }
   };
 
+  const [cycloneInfo, setCycloneInfo] = useState(null);
+
+  useEffect(() => {
+    const fetchCycloneInfo = async () => {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+        const response = await fetch(`${baseUrl}/api/v1/cyclone-data`);
+        const data = await response.json();
+        setCycloneInfo(data.rss.channel[0].item);
+      } catch (error) {
+        console.error('Error fetching cyclone info:', error);
+      }
+    };
+
+    fetchCycloneInfo();
+  }, []);
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold text-center sm:text-left">Weather Forecast</h1>
@@ -85,23 +105,32 @@ const Home = () => {
       <Registration />
       {userId && <PositionUpdater userId={userId} />}
       
-      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
-        <h2 className="text-xl font-semibold mb-2">NWS Marine Weather Analysis</h2>
-        <p className="mb-2">
-          This tool provides detailed marine weather forecasts based on specific locations you select. Only zones supported by the NWS will contain forecast.
-        </p>
-        <h3 className="font-semibold mt-3 mb-1">How to Use:</h3>
-        <ol className="list-decimal list-inside">
-          <li>Click on any point on the map below to select a location.</li>
-          <li>The app will fetch the relevant weather forecast for that location.</li>
-          <li>You&apos;ll receive forecasts for three zones: Coastal, Offshore, and High Seas (if available).</li>
-          <li>An AI-generated analysis of the forecast will also be provided.</li>
-          <li>Use the buttons below the map to switch between different forecast types.</li>
-        </ol>
-        <p className="mt-2">
-          The forecasts are sourced from the National Weather Service (NWS) marine weather data.
-        </p>
-      </div>
+      <button
+        onClick={() => setIsInstructionsOpen(!isInstructionsOpen)}
+        className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      >
+        {isInstructionsOpen ? 'Hide Instructions' : 'Show Instructions'}
+      </button>
+
+      {isInstructionsOpen && (
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+          <h2 className="text-xl font-semibold mb-2">NWS Marine Weather Analysis</h2>
+          <p className="mb-2">
+            This tool provides detailed marine weather forecasts based on specific locations you select. Only zones supported by the NWS will contain forecast.
+          </p>
+          <h3 className="font-semibold mt-3 mb-1">How to Use:</h3>
+          <ol className="list-decimal list-inside">
+            <li>Click on any point on the map below to select a location.</li>
+            <li>The app will fetch the relevant weather forecast for that location.</li>
+            <li>You'll receive forecasts for three zones: Coastal, Offshore, and High Seas (if available).</li>
+            <li>An AI-generated analysis of the forecast will also be provided.</li>
+            <li>Use the buttons below the map to switch between different forecast types.</li>
+          </ol>
+          <p className="mt-2">
+            The forecasts are sourced from the National Weather Service (NWS) marine weather data.
+          </p>
+        </div>
+      )}
 
       <div className="h-[300px] sm:h-[400px] w-full">
         <Map onLocationClick={handleLocationClick} userPosition={userPosition} />
@@ -123,6 +152,14 @@ const Home = () => {
           <span className="block sm:inline">{error}</span>
         </div>
       )}
+      <button
+        onClick={() => setIsCycloneInfoOpen(!isCycloneInfoOpen)}
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      >
+        {isCycloneInfoOpen ? 'Hide Tropical Cyclone Data' : 'Show Tropical Cyclone Data'}
+      </button>
+
+      {isCycloneInfoOpen && <CycloneInfo />}
       {forecastAnalysis && forecast && (
         <div className="bg-blue-100 p-4 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-2">Forecast Analysis</h2>

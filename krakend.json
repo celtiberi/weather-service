@@ -72,6 +72,28 @@
           "host": ["weather-api:3100"]
         }
       ]
+    },
+    {
+      "endpoint": "/api/v1/cyclone-data",
+      "method": "GET",
+      "backend": [
+        {
+          "url_pattern": "/cyclone-data",
+          "method": "GET",
+          "host": ["weather-api:3100"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/v1/cyclone-shapefiles",
+      "method": "GET",
+      "backend": [
+        {
+          "url_pattern": "/cyclone-shapefiles",
+          "method": "GET",
+          "host": ["weather-api:3100"]
+        }
+      ]
     }
   ],
   "extra_config": {

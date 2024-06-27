@@ -16,6 +16,8 @@ const dotenv = require('dotenv');
 const morgan = require('morgan');
 const { createLogger, nws } = require('../shared/module');
 const { analyzeWeatherForecast } = require('./forecast-analysis.js');
+const { fetchRssData, downloadShapefiles, readShapefiles } = require('./cyclone-data.js');
+
 
 // Load environment variables
 const getDotEnvPath = (env) => env === 'TEST' ? '.env.test' : '.env';
@@ -148,14 +150,57 @@ app.post('/update-position', async (req, res) => {
   }
 });
 
+app.get('/cyclone-data', async (req, res) => {
+  try {
+    const rssData = await fetchRssData();
+    res.json(rssData);
+  } catch (error) {
+    logger.error('Error fetching cyclone RSS data:', error);
+    res.status(500).json({ error: 'Failed to fetch cyclone data' });
+  }
+});
+
+app.get('/cyclone-shapefiles', async (req, res) => {
+  try {
+    await downloadShapefiles();
+    const shapefiles = await readShapefiles();
+    res.json(shapefiles);
+  } catch (error) {
+    logger.error('Error fetching cyclone shapefiles:', error);
+    res.status(500).json({ error: 'Failed to fetch cyclone shapefiles' });
+  }
+});
+
+async function connectToMongoDB() {
+
+  const mongodbUri = 'mongodb://mongodb:27017/ocean';
+  try {
+    await mongoose.connect(mongodbUri, {
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+    });
+    console.log('Mongoose connected to MongoDB');
+    console.log(`Mongoose connection ready state: ${mongoose.connection.readyState}`);
+
+    mongoose.connection.on('disconnected', () => {
+      console.log('Disconnected from MongoDB');
+    });
+
+    mongoose.connection.on('error', (error) => {
+      console.error('MongoDB connection error:', error);
+    });
+
+  } catch (error) {
+    console.error('Error connecting to MongoDB:', error);
+    throw error;
+  }
+}
+
 // Server startup
 let server;
 async function startServer() {
   try {
-    const mongodbUri = 'mongodb://mongodb:27017/ocean';
-    await mongoose.connect(mongodbUri);
-    
-    logger.info('Mongoose connected to MongoDB');
+    await connectToMongoDB();
 
     server = app.listen(3100, () => {
       logger.info('Server is running on port 3100');
