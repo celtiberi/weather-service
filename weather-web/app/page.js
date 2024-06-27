@@ -87,7 +87,9 @@ const Home = () => {
     const fetchCycloneInfo = async () => {
       try {
         const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-        const response = await fetch(`${baseUrl}/api/v1/cyclone-data`);
+        const url = `${baseUrl}/api/v1/cyclone-data`;
+        console.log("Fetching cyclone data from URL:", url);
+        const response = await fetch(url);
         const data = await response.json();
         setCycloneInfo(data.rss.channel[0].item);
       } catch (error) {
