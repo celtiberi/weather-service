@@ -44,7 +44,7 @@ const Map = ({ onLocationClick, userPosition }) => {
     const fetchCycloneData = async () => {
       try {
         const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-        const shapefilesResponse = await fetch(`${baseUrl}/api/v1/cyclone-shapefiles`);
+        const shapefilesResponse = await fetch(`${baseUrl}/cyclone-shapefiles`);
         const shapefilesData = await shapefilesResponse.json();
         setCycloneShapefiles(shapefilesData);
       } catch (error) {

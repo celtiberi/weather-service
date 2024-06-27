@@ -12,7 +12,7 @@ const PositionUpdater = ({ userId }) => {
           async (position) => {
             const { latitude, longitude } = position.coords;
             try {
-              await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/update-position`, {
+              await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-position`, {
                 userId,
                 latitude,
                 longitude

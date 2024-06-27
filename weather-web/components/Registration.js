@@ -20,7 +20,7 @@ const Registration = () => {
   const registerUser = async (id) => {
     try {
       const deviceType = 'web'; // Or implement device detection logic
-      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/register`, { userId: id, deviceType });
+      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/register`, { userId: id, deviceType });
       setIsRegistered(true);
       setUserId(id);
       localStorage.setItem('userId', id);
@@ -39,7 +39,7 @@ const Registration = () => {
 
   const handleUnregister = async () => {
     try {
-      const unregisterUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/unregister`;
+      const unregisterUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/unregister`;
       await axios.post(unregisterUrl, { userId });
       completeUnregistration();
     } catch (error) {
