@@ -9,7 +9,7 @@ const CycloneInfo = () => {
     const fetchCycloneData = async () => {
       try {
         const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-        const response = await fetch(`${baseUrl}/api/v1/cyclone-data`);
+        const response = await fetch(`${baseUrl}/cyclone-data`);
         const data = await response.json();
         setCycloneData(data);
       } catch (error) {
