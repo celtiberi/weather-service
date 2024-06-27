@@ -140,7 +140,7 @@ services:
     build: 
       context: ./weather-web
       args:
-      - NEXT_PUBLIC_API_BASE_URL=http://207.5.194.71:8080 
+      - NEXT_PUBLIC_API_BASE_URL=http://207.5.194.71:3100
     image: docker.io/celtiberi/weather-web:latest
     container_name: weather-web
     restart: always

@@ -32,6 +32,7 @@
     {
       "endpoint": "/api/v1/point-forecast/{lat}/{lon}",
       "method": "GET",
+      "output_encoding": "no-op",
       "backend": [
         {
           "url_pattern": "/point-forecast?lat={lat}&lon={lon}",
