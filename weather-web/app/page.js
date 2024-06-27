@@ -122,7 +122,7 @@ const Home = () => {
           <ol className="list-decimal list-inside">
             <li>Click on any point on the map below to select a location.</li>
             <li>The app will fetch the relevant weather forecast for that location.</li>
-            <li>You'll receive forecasts for three zones: Coastal, Offshore, and High Seas (if available).</li>
+            <li>You`&apos;`ll receive forecasts for three zones: Coastal, Offshore, and High Seas (if available).</li>
             <li>An AI-generated analysis of the forecast will also be provided.</li>
             <li>Use the buttons below the map to switch between different forecast types.</li>
           </ol>
