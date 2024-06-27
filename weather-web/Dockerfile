@@ -13,6 +13,13 @@ RUN npm ci
 # Copy the rest of the application code to the working directory
 COPY . .
 
+# Copy the .env.local file
+COPY .env.local .env.local
+
+# Add build argument for API base URL
+ARG NEXT_PUBLIC_API_BASE_URL
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+
 # Build the Next.js application
 RUN npm run build
 
