@@ -19,12 +19,7 @@ const { analyzeWeatherForecast } = require('./forecast-analysis.js');
 const { fetchRssData, downloadShapefiles, readShapefiles } = require('./cyclone-data.js');
 const cors = require('cors');
 
-// Enable CORS for all routes
-app.use(cors({
-  origin: ['http://207.5.194.71:3000', 'http://localhost:3000'], // Add any other origins you need
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+
 
 // Load environment variables
 const getDotEnvPath = (env) => env === 'TEST' ? '.env.test' : '.env';
@@ -36,6 +31,13 @@ const logger = createLogger('weather-api', process.env.LOGSTASH_PORT || 5044);
 // Initialize Express app
 const app = express();
 app.use(express.json());
+
+// Enable CORS for all routes
+app.use(cors({
+  origin: ['http://207.5.194.71:3000', 'http://localhost:3000'], // Add any other origins you need
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Set up morgan for HTTP request logging
 app.use(morgan('dev'));
