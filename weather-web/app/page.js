@@ -48,7 +48,7 @@ const Home = () => {
     setLoading(true);
     setError(null);
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-    const url = `${baseUrl}/api/v1/point-forecast/${latlng.lat}/${latlng.lng}`;
+    const url = `${baseUrl}/point-forecast?lat=${latlng.lat}&lon=${latlng.lng}`;
     try {
       const response = await axios.get(url);
       setForecast(response.data.forecasts);
@@ -87,7 +87,7 @@ const Home = () => {
     const fetchCycloneInfo = async () => {
       try {
         const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-        const url = `${baseUrl}/api/v1/cyclone-data`;
+        const url = `${baseUrl}/cyclone-data`;
         console.log("Fetching cyclone data from URL:", url);
         const response = await fetch(url);
         const data = await response.json();
