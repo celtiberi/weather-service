@@ -38,16 +38,16 @@ const Map = ({ onLocationClick, userPosition }) => {
   );
 
   // Create a custom X icon for cyclone markers
-  const cycloneIcon = L.divIcon({
+  const createCycloneIcon = (color) => L.divIcon({
     html: `
-      <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <line x1="4" y1="4" x2="20" y2="20" stroke="red" stroke-width="3"/>
-        <line x1="20" y1="4" x2="4" y2="20" stroke="red" stroke-width="3"/>
+      <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <line x1="4" y1="4" x2="20" y2="20" stroke="${color}" stroke-width="5"/>
+        <line x1="20" y1="4" x2="4" y2="20" stroke="${color}" stroke-width="5"/>
       </svg>
     `,
     className: '',
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
   });
 
   // Create a boat icon for user position
@@ -98,7 +98,6 @@ const Map = ({ onLocationClick, userPosition }) => {
 
     return null;
   };
-
   const CycloneLayer = () => {
     const map = useMap();
 
@@ -121,20 +120,32 @@ const Map = ({ onLocationClick, userPosition }) => {
                 color = '#FFFF00';  // Yellow for low risk
               }
 
-              return { color, weight, opacity };
+              return { color, weight, opacity, dashArray: '5, 5' };
             },
             pointToLayer: (feature, latlng) => {
-              return L.marker(latlng, { icon: cycloneIcon });
+              let color = '#FF0000';  // Default color
+
+              if (feature.properties.RISK2DAY === 'High') {
+                color = '#FF0000';  // Red for high risk
+              } else if (feature.properties.RISK2DAY === 'Medium') {
+                color = '#FFA500';  // Orange for medium risk
+              } else if (feature.properties.RISK2DAY === 'Low') {
+                  color = '#FFFF00';  // Yellow for low risk
+              }
+              
+              return L.marker(latlng, { icon: createCycloneIcon(color) });
             },
             onEachFeature: (feature, layer) => {
               if (feature.properties) {
                 layer.bindPopup(`
-                  <h3>Cyclone Information</h3>
-                  <p>Area: ${feature.properties.AREA}</p>
-                  <p>2-Day Probability: ${feature.properties.PROB2DAY}</p>
-                  <p>2-Day Risk: ${feature.properties.RISK2DAY}</p>
-                  <p>7-Day Probability: ${feature.properties.PROB7DAY}</p>
-                  <p>7-Day Risk: ${feature.properties.RISK7DAY}</p>
+                  <div style="font-family: Arial, sans-serif; font-size: 14px;">
+                    <h3 style="margin: 0; font-size: 16px; color: #333;">Cyclone Information</h3>
+                    <p style="margin: 4px 0;"><strong>Area:</strong> ${feature.properties.AREA}</p>
+                    <p style="margin: 4px 0;"><strong>2-Day Probability:</strong> ${feature.properties.PROB2DAY}</p>
+                    <p style="margin: 4px 0;"><strong>2-Day Risk:</strong> ${feature.properties.RISK2DAY}</p>
+                    <p style="margin: 4px 0;"><strong>7-Day Probability:</strong> ${feature.properties.PROB7DAY}</p>
+                    <p style="margin: 4px 0;"><strong>7-Day Risk:</strong> ${feature.properties.RISK7DAY}</p>
+                  </div>
                 `);
               }
             }
@@ -145,11 +156,10 @@ const Map = ({ onLocationClick, userPosition }) => {
           layers.forEach(layer => map.removeLayer(layer));
         };
       }
-    }, [map, cycloneShapefiles, cycloneIcon]);
+    }, [map, cycloneShapefiles]);
 
     return null;
   };
-
   useEffect(() => {
     if (userPosition) {
       setMapCenter(userPosition);
