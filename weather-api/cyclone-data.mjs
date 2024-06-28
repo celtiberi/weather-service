@@ -40,6 +40,11 @@ async function fetchRssData() {
 }
 
 async function downloadAndExtractShapefiles() {
+  const files = await fs.readdir(SHAPEFILE_DIR);
+  for (const file of files) {
+    const filePath = path.join(SHAPEFILE_DIR, file);
+    await fs.unlink(filePath);
+  }
   const response = await axios.get(SHAPEFILE_URL, { responseType: 'arraybuffer' });
   const zip = new AdmZip(response.data);
   
