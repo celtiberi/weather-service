@@ -7,6 +7,7 @@ import Registration from '../components/Registration';
 import PositionUpdater from '../components/PositionUpdater';
 import moment from 'moment';
 import CycloneInfo from '../components/CycloneInfo';
+import Image from 'next/image'; 
 
 const Map = dynamic(() => import('../components/Map'), {
   ssr: false,
@@ -29,6 +30,7 @@ const Home = () => {
   const [userPosition, setUserPosition] = useState(null);
   const [isCycloneInfoOpen, setIsCycloneInfoOpen] = useState(false);
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     // Function to update user position
@@ -100,6 +102,8 @@ const Home = () => {
     fetchCycloneInfo();
   }, []);
 
+  const closeModal = () => setSelectedImage(null);
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold text-center sm:text-left">Weather Forecast</h1>
@@ -138,6 +142,37 @@ const Home = () => {
         <Map onLocationClick={handleLocationClick} userPosition={userPosition} />
       </div>
       
+      <button
+        onClick={() => setIsCycloneInfoOpen(!isCycloneInfoOpen)}
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      >
+        {isCycloneInfoOpen ? 'Hide Tropical Cyclone Data' : 'Show Tropical Cyclone Data'}
+      </button>
+
+      {isCycloneInfoOpen && <CycloneInfo setSelectedImage={setSelectedImage} />}
+      {/* Modal for full-size image */}
+      {selectedImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[1000]" onClick={closeModal}>
+          <div className="max-w-4xl max-h-[90vh] w-[90vw] p-4 relative bg-white rounded-lg" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="absolute top-2 right-2 text-black text-xl font-bold z-10" 
+              onClick={closeModal}
+            >
+              ×
+            </button>
+            <div className="relative w-full h-[calc(90vh-2rem)]">
+              <Image 
+                src={selectedImage}
+                alt="Full size image"
+                fill
+                sizes="(max-width: 768px) 90vw, (max-width: 1200px) 80vw, 70vw"
+                style={{ objectFit: "contain" }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {coordinates && (
         <p className="text-lg text-center sm:text-left">
           Selected coordinates: {coordinates.lat.toFixed(4)}°, {coordinates.lng.toFixed(4)}°
@@ -154,14 +189,14 @@ const Home = () => {
           <span className="block sm:inline">{error}</span>
         </div>
       )}
-      <button
+      {/* <button
         onClick={() => setIsCycloneInfoOpen(!isCycloneInfoOpen)}
         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
       >
         {isCycloneInfoOpen ? 'Hide Tropical Cyclone Data' : 'Show Tropical Cyclone Data'}
       </button>
 
-      {isCycloneInfoOpen && <CycloneInfo />}
+      {isCycloneInfoOpen && <CycloneInfo />} */}
       {forecastAnalysis && forecast && (
         <div className="bg-blue-100 p-4 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-2">Forecast Analysis</h2>

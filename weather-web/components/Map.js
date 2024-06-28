@@ -5,6 +5,17 @@ import { MapContainer, TileLayer, useMapEvents, Marker, ScaleControl, useMap } f
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
+import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
+import iconUrl from 'leaflet/dist/images/marker-icon.png';
+import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: iconRetinaUrl.src,
+  iconUrl: iconUrl.src,
+  shadowUrl: shadowUrl.src,
+});
+
 const Map = ({ onLocationClick, userPosition }) => {
   const [marker, setMarker] = useState(null);
   const [mapCenter, setMapCenter] = useState([30, -40]);
@@ -25,6 +36,19 @@ const Map = ({ onLocationClick, userPosition }) => {
       }),
     []
   );
+
+  // Create a custom X icon for cyclone markers
+  const cycloneIcon = L.divIcon({
+    html: `
+      <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <line x1="4" y1="4" x2="20" y2="20" stroke="red" stroke-width="3"/>
+        <line x1="20" y1="4" x2="4" y2="20" stroke="red" stroke-width="3"/>
+      </svg>
+    `,
+    className: '',
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+  });
 
   // Create a boat icon for user position
   const boatIcon = useMemo(
@@ -80,22 +104,48 @@ const Map = ({ onLocationClick, userPosition }) => {
 
     useEffect(() => {
       if (cycloneShapefiles) {
-        Object.entries(cycloneShapefiles).forEach(([name, features]) => {
-          L.geoJSON(features, {
-            style: {
-              color: '#FF0000',
-              weight: 2,
-              opacity: 0.7
+        const layers = Object.entries(cycloneShapefiles).map(([name, geoJsonData]) => {
+          return L.geoJSON(geoJsonData, {
+            style: (feature) => {
+              let color = '#FF0000';  // Default color
+              let weight = 2;
+              let opacity = 0.7;
+
+              if (feature.properties.RISK2DAY === 'High') {
+                color = '#FF0000';  // Red for high risk
+                weight = 3;
+                opacity = 0.9;
+              } else if (feature.properties.RISK2DAY === 'Medium') {
+                color = '#FFA500';  // Orange for medium risk
+              } else if (feature.properties.RISK2DAY === 'Low') {
+                color = '#FFFF00';  // Yellow for low risk
+              }
+
+              return { color, weight, opacity };
+            },
+            pointToLayer: (feature, latlng) => {
+              return L.marker(latlng, { icon: cycloneIcon });
             },
             onEachFeature: (feature, layer) => {
               if (feature.properties) {
-                layer.bindPopup(`<pre>${JSON.stringify(feature.properties, null, 2)}</pre>`);
+                layer.bindPopup(`
+                  <h3>Cyclone Information</h3>
+                  <p>Area: ${feature.properties.AREA}</p>
+                  <p>2-Day Probability: ${feature.properties.PROB2DAY}</p>
+                  <p>2-Day Risk: ${feature.properties.RISK2DAY}</p>
+                  <p>7-Day Probability: ${feature.properties.PROB7DAY}</p>
+                  <p>7-Day Risk: ${feature.properties.RISK7DAY}</p>
+                `);
               }
             }
           }).addTo(map);
         });
+
+        return () => {
+          layers.forEach(layer => map.removeLayer(layer));
+        };
       }
-    }, [map, cycloneShapefiles]);
+    }, [map, cycloneShapefiles, cycloneIcon]);
 
     return null;
   };
@@ -105,7 +155,6 @@ const Map = ({ onLocationClick, userPosition }) => {
       setMapCenter(userPosition);
     }
   }, [userPosition]);
-
 
   return (
     <MapContainer

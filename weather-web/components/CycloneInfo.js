@@ -1,10 +1,10 @@
 // components/CycloneInfo.js
+
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
-const CycloneInfo = () => {
+const CycloneInfo = ({ setSelectedImage }) => {
   const [cycloneData, setCycloneData] = useState(null);
-  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     const fetchCycloneData = async () => {
@@ -21,10 +21,6 @@ const CycloneInfo = () => {
     fetchCycloneData();
   }, []);
 
-  if (!cycloneData) {
-    return <div>Loading cyclone data...</div>;
-  }
-
   const renderOutlook = (outlook) => {
     const title = outlook.title[0];
     const description = outlook.description[0];
@@ -38,7 +34,13 @@ const CycloneInfo = () => {
             const src = img.match(/src="(.*?)"/)[1];
             return (
               <div key={index} className="relative h-32 cursor-pointer" onClick={() => setSelectedImage(src)}>
-                <Image src={src} alt={`Outlook image ${index + 1}`} fill style={{objectFit: "contain"}} />
+                <Image 
+                  src={src} 
+                  alt={`Outlook image ${index + 1}`} 
+                  fill
+                  sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                  style={{ objectFit: "contain" }}
+                />
               </div>
             );
           })}
@@ -51,14 +53,11 @@ const CycloneInfo = () => {
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-bold">Tropical Cyclone Information</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {cycloneData.rss.channel[0].item.map(renderOutlook)}
-      </div>
-      {selectedImage && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setSelectedImage(null)}>
-          <div className="max-w-4xl max-h-full p-4 relative w-full h-[80vh]">
-            <Image src={selectedImage} alt="Full size image" fill style={{objectFit: "contain"}} />
-          </div>
+      {!cycloneData ? (
+        <div>Loading cyclone data...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {cycloneData.rss.channel[0].item.map(renderOutlook)}
         </div>
       )}
     </div>
