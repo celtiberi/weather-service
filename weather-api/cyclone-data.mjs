@@ -19,6 +19,20 @@ const SHAPEFILE_DIR = path.join(__dirname, 'cyclone_shapefiles');
 let cachedShapefiles = null;
 let lastUpdate = null;
 
+const shapefilesPromise = (async () => {
+  await updateShapefiles();
+})();
+
+async function getShapefiles() {
+  try {
+    await shapefilesPromise;
+    return cachedShapefiles;
+  } catch (error) {
+    console.error('Error getting shapefiles:', error);
+    throw error;
+  }
+}
+
 async function fetchRssData() {
   const response = await axios.get(RSS_URL);
   const result = await parseXml(response.data);
@@ -75,20 +89,19 @@ async function readShapefiles() {
   return shapefiles;
 }
 
-async function getShapefiles() {
+async function updateShapefiles() {
   try {
-    const currentTime = new Date();
-    if (!cachedShapefiles || !lastUpdate || (currentTime - lastUpdate) > 30 * 60 * 1000) {
-      await downloadAndExtractShapefiles();
-      cachedShapefiles = await readShapefiles();
-      lastUpdate = currentTime;
-    }
-    return cachedShapefiles;
+    await downloadAndExtractShapefiles();
+    cachedShapefiles = await readShapefiles();
+    lastUpdate = new Date();
+    console.log('Shapefiles updated at', lastUpdate);
   } catch (error) {
     console.error('Error updating shapefiles:', error);
-    throw error;
   }
 }
+
+// Check for new shapefiles every 30 minutes
+setInterval(updateShapefiles, 30 * 60 * 1000);
 
 export {
   fetchRssData,
