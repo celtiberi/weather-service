@@ -1,5 +1,5 @@
-const turf = require('@turf/turf');
-const nws = require('./nws');
+import * as turf from '@turf/turf';
+import * as nws from './nws.js';
 
 // Function to calculate the distance and bearing between two points
 function calculateDistanceAndBearing(point1, point2) {

@@ -1,6 +1,6 @@
-const path = require('path');
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
+import path from 'path';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
 
 const getDotEnvPath = (env) => {
   if (env === 'TEST') {
@@ -66,8 +66,7 @@ const Boat = mongoose.model('Boat', boatSchema);
 
 const boatCollection = mongoose.connection.collection('boats');
 
-module.exports = {
+export default {
     Boat,
     boatCollection
   };
-  

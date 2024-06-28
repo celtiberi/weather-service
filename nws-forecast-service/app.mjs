@@ -1,13 +1,20 @@
-const jackrabbit = require('@pager/jackrabbit');
-const path = require('path');
-const fetch = require('node-fetch');
-const dotenv = require('dotenv');
-const { createLogger, nws } = require('../shared/module');
-const moment = require('moment-timezone');
-const {database} = require('../shared/module');
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
 
-database.getConnection();
-const mongoose = database.mongoose;
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
+import jackrabbit from '@pager/jackrabbit';
+import path from 'path';
+import fetch from 'node-fetch';
+import dotenv from 'dotenv';
+import { createLogger, nws } from '../shared/module/index.mjs';
+
+import moment from 'moment-timezone';
 
 // Initialize logger
 const logger = createLogger('nws-forecast-service', process.env.LOGSTASH_PORT || 5044);
@@ -418,8 +425,5 @@ async function initializeApp() {
   }
 }
 
-if (require.main === module) {
-  initializeApp();
-}
 
-module.exports = { initializeApp, updateForecasts }; 
+export { initializeApp, updateForecasts }; 

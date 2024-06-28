@@ -1,9 +1,7 @@
 // forecast-analysis.js
-
-const { Anthropic } = require('@anthropic-ai/sdk');
-const mongoose = require('mongoose');
-
-const fs = require('fs');
+import { Anthropic } from '@anthropic-ai/sdk';
+import mongoose from 'mongoose';
+import fs from 'fs';
 
 
 function getSecret(envVar) {
@@ -119,6 +117,6 @@ async function analyzeWeatherForecast(weatherForecast) {
   }
 }
 
-module.exports = {
+export {
   analyzeWeatherForecast,
 };

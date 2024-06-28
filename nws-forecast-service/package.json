@@ -1,6 +1,7 @@
 {
   "name": "mws-forecast-service",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.js",
   "devDependencies": {
     "@pager/semantic-release-config": "2.x",

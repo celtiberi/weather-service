@@ -1,28 +1,28 @@
 services:
 
-  boat-api:
-    build: 
-      context: .
-      dockerfile: ./boat-api/Dockerfile
-    image: docker.io/celtiberi/boat-api:latest
-    container_name: boat-api
-    restart: always
-    ports: 
-      - "3050:3000"
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    environment:
-      RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
-      MONGODB_URI: /run/secrets/mongodb_uri
-      LOGSTASH_HOST: localhost
-      LOGSTASH_PORT: 5044
-    secrets:
-      - mongodb_uri
-    volumes:
-      - ./shared:/app/../shared
-    networks:
-      - weather
+  # boat-api:
+  #   build: 
+  #     context: .
+  #     dockerfile: ./boat-api/Dockerfile
+  #   image: docker.io/celtiberi/boat-api:latest
+  #   container_name: boat-api
+  #   restart: always
+  #   ports: 
+  #     - "3050:3000"
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   environment:
+  #     RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
+  #     MONGODB_URI: /run/secrets/mongodb_uri
+  #     LOGSTASH_HOST: localhost
+  #     LOGSTASH_PORT: 5044
+  #   secrets:
+  #     - mongodb_uri
+  #   volumes:
+  #     - ./shared:/app/../shared
+  #   networks:
+  #     - weather
 
   # elk:
   #   image: sebp/elk

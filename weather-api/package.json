@@ -2,6 +2,7 @@
   "name": "weather-api",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon --inspect=0.0.0.0:9229 -L index.js"
@@ -9,6 +10,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",
     "@pager/jackrabbit": "^5.5.0",
+    "adm-zip": "^0.5.14",
     "axios": "^1.7.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -16,8 +18,11 @@
     "mongoose": "^8.4.4",
     "morgan": "^1.10.0",
     "shapefile": "^0.6.6",
+    "shp-stream": "^1.0.0",
+    "shpjs": "^5.0.1",
     "weather-service-logger": "latest",
-    "xml2js": "^0.6.2"
+    "xml2js": "^0.6.2",
+    "yauzl-promise": "^4.0.0"
   },
   "devDependencies": {
     "chai": "4.x",

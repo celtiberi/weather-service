@@ -1,35 +1,46 @@
-const shapefile = require('shapefile');
-const turf = require('@turf/turf');
-const path = require('path');
-const dotenv = require('dotenv');
-const tzlookup = require("tz-lookup");
-const moment = require('moment-timezone');
-const mongoose = require('mongoose');
+import shapefile from 'shapefile';
+import * as turf from '@turf/turf';
+import path from 'path';
+import dotenv from 'dotenv';
+import tzlookup from 'tz-lookup';
+import moment from 'moment-timezone';
+import mongoose from 'mongoose';
+import { fileURLToPath } from 'url';
 
-// TODO I have not been able to solve the problem of how to only have one mongodb connection.
-// I think the issue is that there are multiple node_modules... shared/module and nws-forecast-service/node_modules
-// I need to find out how to consolidate the mongodb connection so that it is not duplicated in each module
-// TODO make shared/module an actual npm package instead of trying to copy the code around.  This would fix
-//   the issue
-const mongodbUri = 'mongodb://mongodb:27017/ocean';
-mongoose.connect(mongodbUri, {
-  serverSelectionTimeoutMS: 30000,
-  socketTimeoutMS: 45000,
-}).then(() => {
-  console.log('Mongoose connected to MongoDB');
-  console.log(`Mongoose connection ready state: ${mongoose.connection.readyState}`);
-}).catch((error) => {
-  console.error('Error connecting to MongoDB:', error);
-});
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-mongoose.connection.on('disconnected', () => {
-  console.log('Disconnected from MongoDB');
-});
+async function connectToMongoDB() {
+  console.log('[nws.mjs] Connecting to MongoDB');
+  const mongodbUri = 'mongodb://mongodb:27017/ocean';
+  try {
+    if (mongoose.connection.readyState === 1) {
+      console.log('[nws.mjs] Using existing MongoDB connection');
+      return;
+    }
 
-mongoose.connection.on('error', (error) => {
-  console.error('MongoDB connection error:', error);
-});
+    await mongoose.connect(mongodbUri, {
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+    });
+    console.log('[nws.mjs] Mongoose connected to MongoDB');
+    console.log(`[nws.mjs] Mongoose connection ready state: ${mongoose.connection.readyState}`);
 
+    mongoose.connection.on('disconnected', () => {
+      console.log('[nws.mjs] Disconnected from MongoDB');
+    });
+
+    mongoose.connection.on('error', (error) => {
+      console.error('[nws.mjs] MongoDB connection error:', error);
+    });
+
+  } catch (error) {
+    console.error('[nws.mjs] Error connecting to MongoDB:', error);
+    throw error;
+  }
+}
+
+connectToMongoDB();
 
 const getDotEnvPath = (env) => {
   if (env === 'TEST') {
@@ -287,12 +298,12 @@ function getForecastExpirationTime(forecast, timeZone) {
   return expiresAt.toDate();
 }
 
-module.exports = {
+export {
   getLocalTimeForZone,
   getMarineZones,
   getMarineZonesByGPS,
   getPointForecasts,
   getForecastExpirationTime,
-  forecastCollection: forecastCollection,
-  Forecast: Forecast
+  forecastCollection,
+  Forecast
 };

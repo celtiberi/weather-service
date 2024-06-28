@@ -1,25 +1,18 @@
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-  process.exit(1);
-});
+import process from 'process';
+import express from 'express';
+import jackrabbit from '@pager/jackrabbit';
+import path from 'path';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import morgan from 'morgan';
+import { createLogger, nws } from '../shared/module/index.mjs';
+import { analyzeWeatherForecast } from './forecast-analysis.mjs';
+import { fetchRssData, getShapefiles } from './cyclone-data.mjs';
+import cors from 'cors';
+import { fileURLToPath } from 'url';
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  // Application specific logging, throwing an error, or other logic here
-});
-
-const express = require('express');
-const jackrabbit = require('@pager/jackrabbit');
-const path = require('path');
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const morgan = require('morgan');
-const { createLogger, nws } = require('../shared/module');
-const { analyzeWeatherForecast } = require('./forecast-analysis.js');
-const { fetchRssData, downloadShapefiles, readShapefiles } = require('./cyclone-data.js');
-const cors = require('cors');
-
-
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load environment variables
 const getDotEnvPath = (env) => env === 'TEST' ? '.env.test' : '.env';
@@ -34,7 +27,7 @@ app.use(express.json());
 
 // Enable CORS for all routes
 app.use(cors({
-  origin: ['http://207.5.194.71:3000', 'http://localhost:3000'], // Add any other origins you need
+  origin: ['http://207.5.194.71:3000', 'http://localhost:3000', 'http://127.0.0.1:3000'], // Add any other origins you need
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -171,8 +164,7 @@ app.get('/cyclone-data', async (req, res) => {
 
 app.get('/cyclone-shapefiles', async (req, res) => {
   try {
-    await downloadShapefiles();
-    const shapefiles = await readShapefiles();
+    const shapefiles = await getShapefiles();
     res.json(shapefiles);
   } catch (error) {
     logger.error('Error fetching cyclone shapefiles:', error);
@@ -236,4 +228,4 @@ mongoose.connection.on('disconnected', () => {
 // Start the server
 startServer();
 
-module.exports = server;
+export default server;

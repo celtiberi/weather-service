@@ -1,6 +1,7 @@
 {
   "name": "shared-module",
   "version": "1.0.0",
+  "type": "module",
   "dependencies": {
     "@turf/turf": "^6.5.0",
     "dotenv": "^16.4.5",

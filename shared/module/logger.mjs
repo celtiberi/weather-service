@@ -1,7 +1,7 @@
-const winston = require('winston');
-const { LogstashTransport } = require('winston-logstash-transport');
+import winston from 'winston';
+import { LogstashTransport } from 'winston-logstash-transport';
 
-module.exports =  (serviceName, logstashPort) => {
+const createLogger = (serviceName, logstashPort) => {
   const logger = winston.createLogger({
     defaultMeta: { service: serviceName },
     transports: [
@@ -16,3 +16,5 @@ module.exports =  (serviceName, logstashPort) => {
 
   return logger;
 };
+
+export default createLogger;

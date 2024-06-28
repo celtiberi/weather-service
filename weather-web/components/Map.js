@@ -1,3 +1,5 @@
+// components/Map.js
+
 import { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, useMapEvents, Marker, ScaleControl, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
