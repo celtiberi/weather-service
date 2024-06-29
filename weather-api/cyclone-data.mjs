@@ -117,6 +117,21 @@ async function updateShapefiles() {
 // Check for new shapefiles every 30 minutes
 setInterval(updateShapefiles, 30 * 60 * 1000);
 
+// Fetch RSS data
+async function fetchRssData() {
+  try {
+    console.log('Fetching RSS data from:', RSS_URL);
+    const response = await axios.get(RSS_URL);
+    const rssData = await parseXml(response.data);
+    console.log('RSS data fetched and parsed successfully.');
+    return rssData;
+  } catch (error) {
+    console.error('Error fetching RSS data:', error);
+    throw error;
+  }
+}
+
+
 export {
   fetchRssData,
   getShapefiles
