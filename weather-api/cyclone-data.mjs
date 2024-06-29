@@ -20,12 +20,24 @@ let cachedShapefiles = null;
 let lastUpdate = null;
 
 const shapefilesPromise = (async () => {
-  await updateShapefiles();
+  try {
+    console.log('Starting initial download and extraction of shapefiles...');
+    await downloadAndExtractShapefiles();
+    console.log('Initial download and extraction complete. Reading shapefiles...');
+    cachedShapefiles = await readShapefiles();
+    lastUpdate = new Date();
+    console.log('Initial shapefiles read complete. Cached shapefiles are ready.');
+  } catch (error) {
+    console.error('Error initializing shapefiles:', error);
+    throw error;
+  }
 })();
 
 async function getShapefiles() {
   try {
+    console.log('Waiting for shapefiles to be ready...');
     await shapefilesPromise;
+    console.log('Shapefiles are ready. Returning cached shapefiles.');
     return cachedShapefiles;
   } catch (error) {
     console.error('Error getting shapefiles:', error);
@@ -33,13 +45,8 @@ async function getShapefiles() {
   }
 }
 
-async function fetchRssData() {
-  const response = await axios.get(RSS_URL);
-  const result = await parseXml(response.data);
-  return result;
-}
-
 async function downloadAndExtractShapefiles() {
+  console.log('Downloading shapefiles from:', SHAPEFILE_URL);
   const files = await fs.readdir(SHAPEFILE_DIR);
   for (const file of files) {
     const filePath = path.join(SHAPEFILE_DIR, file);
@@ -50,6 +57,7 @@ async function downloadAndExtractShapefiles() {
   
   await fs.mkdir(SHAPEFILE_DIR, { recursive: true });
   zip.extractAllTo(SHAPEFILE_DIR, true);
+  console.log('Shapefiles downloaded and extracted to:', SHAPEFILE_DIR);
 }
 
 async function readShapefile(shpPath) {
@@ -96,6 +104,7 @@ async function readShapefiles() {
 
 async function updateShapefiles() {
   try {
+    console.log('Updating shapefiles...');
     await downloadAndExtractShapefiles();
     cachedShapefiles = await readShapefiles();
     lastUpdate = new Date();
