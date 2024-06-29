@@ -176,6 +176,7 @@ volumes:
   grib_data:
   # grafana_data:
   mongodb_data:
+  cyclone_shapefiles:
 
 networks:
   weather:
