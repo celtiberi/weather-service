@@ -12,6 +12,7 @@ services:
       - ./shared:/app/shared
       - /app/service/node_modules
       - /app/shared/module/node_modules
+      - cyclone_shapefiles:/app/service/cyclone_shapefiles
     ports:
       - "9229:9229"
       - "3100:3100"

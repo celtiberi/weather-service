@@ -21,15 +21,10 @@ let lastUpdate = null;
 
 const shapefilesPromise = (async () => {
   try {
-    console.log('Starting initial download and extraction of shapefiles...');
-    await downloadAndExtractShapefiles();
-    console.log('Initial download and extraction complete. Reading shapefiles...');
-    cachedShapefiles = await readShapefiles();
-    lastUpdate = new Date();
-    console.log('Initial shapefiles read complete. Cached shapefiles are ready.');
+    await updateShapefiles();
   } catch (error) {
     console.error('Error initializing shapefiles:', error);
-    throw error;
+    //throw error;
   }
 })();
 
@@ -48,6 +43,8 @@ async function getShapefiles() {
 async function downloadAndExtractShapefiles() {
   console.log('Downloading shapefiles from:', SHAPEFILE_URL);
   const files = await fs.readdir(SHAPEFILE_DIR);
+
+  // delete the old files
   for (const file of files) {
     const filePath = path.join(SHAPEFILE_DIR, file);
     await fs.unlink(filePath);
@@ -105,6 +102,7 @@ async function readShapefiles() {
 async function updateShapefiles() {
   try {
     console.log('Updating shapefiles...');
+    await fs.mkdir(SHAPEFILE_DIR, { recursive: true });
     await downloadAndExtractShapefiles();
     cachedShapefiles = await readShapefiles();
     lastUpdate = new Date();

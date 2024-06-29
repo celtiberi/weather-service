@@ -133,6 +133,7 @@ services:
       - anthropic_api_key
     volumes:
       - ./shared:/app/../shared
+      - cyclone_shapefiles:/app/service/cyclone_shapefiles
     networks:
       - weather
 
