@@ -27,7 +27,18 @@ app.use(express.json());
 
 // Enable CORS for all routes
 app.use(cors({
-  origin: ['http://207.5.194.71:3000', 'http://localhost:3000', 'http://127.0.0.1:3000', 'http://channel-16.com:3000', 'https://channel-16.com:3000', 'http://channel-16.com', 'https://channel-16.com'], // Add any other origins you need
+  origin: [
+    'http://207.5.194.71:3000', 
+    'http://localhost:3000', 
+    'http://127.0.0.1:3000', 
+    'http://channel-16.com:3000', 
+    'https://channel-16.com:3000', 
+    'http://channel-16.com', 
+    'https://channel-16.com', 
+    'https://www.channel-16.com', 
+    'https://www.channel-16.com/api',
+    'http://www.channel-16.com/api'
+  ], // Add any other origins you need
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
