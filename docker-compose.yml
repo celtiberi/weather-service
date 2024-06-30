@@ -57,14 +57,14 @@ services:
     networks:
       - weather
 
-  krakend:
-    image: devopsfaith/krakend
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./krakend.json:/etc/krakend/krakend.json
-    networks:
-      - weather
+  # krakend:
+  #   image: devopsfaith/krakend
+  #   ports:
+  #     - "8080:8080"
+  #   volumes:
+  #     - ./krakend.json:/etc/krakend/krakend.json
+  #   networks:
+  #     - weather
 
   nws-forecast-service:
     build: 
