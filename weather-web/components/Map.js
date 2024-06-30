@@ -9,6 +9,8 @@ import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
 
+import CycloneLayer from './CycloneLayer';
+
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: iconRetinaUrl.src,
@@ -72,6 +74,7 @@ const Map = ({ onLocationClick, userPosition }) => {
         const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
         const shapefilesResponse = await fetch(`${baseUrl}/cyclone-shapefiles`);
         const shapefilesData = await shapefilesResponse.json();
+        console.log('Fetched cyclone data:', shapefilesData);
         setCycloneShapefiles(shapefilesData);
       } catch (error) {
         console.error('Error fetching cyclone data:', error);
@@ -98,68 +101,7 @@ const Map = ({ onLocationClick, userPosition }) => {
 
     return null;
   };
-  const CycloneLayer = () => {
-    const map = useMap();
 
-    useEffect(() => {
-      if (cycloneShapefiles) {
-        const layers = Object.entries(cycloneShapefiles).map(([name, geoJsonData]) => {
-          return L.geoJSON(geoJsonData, {
-            style: (feature) => {
-              let color = '#FF0000';  // Default color
-              let weight = 2;
-              let opacity = 0.7;
-
-              if (feature.properties.RISK2DAY === 'High') {
-                color = '#FF0000';  // Red for high risk
-                weight = 3;
-                opacity = 0.9;
-              } else if (feature.properties.RISK2DAY === 'Medium') {
-                color = '#FFA500';  // Orange for medium risk
-              } else if (feature.properties.RISK2DAY === 'Low') {
-                color = '#FFFF00';  // Yellow for low risk
-              }
-
-              return { color, weight, opacity, dashArray: '5, 5' };
-            },
-            pointToLayer: (feature, latlng) => {
-              let color = '#FF0000';  // Default color
-
-              if (feature.properties.RISK2DAY === 'High') {
-                color = '#FF0000';  // Red for high risk
-              } else if (feature.properties.RISK2DAY === 'Medium') {
-                color = '#FFA500';  // Orange for medium risk
-              } else if (feature.properties.RISK2DAY === 'Low') {
-                  color = '#FFFF00';  // Yellow for low risk
-              }
-              
-              return L.marker(latlng, { icon: createCycloneIcon(color) });
-            },
-            onEachFeature: (feature, layer) => {
-              if (feature.properties) {
-                layer.bindPopup(`
-                  <div style="font-family: Arial, sans-serif; font-size: 14px;">
-                    <h3 style="margin: 0; font-size: 16px; color: #333;">Cyclone Information</h3>
-                    <p style="margin: 4px 0;"><strong>Area:</strong> ${feature.properties.AREA}</p>
-                    <p style="margin: 4px 0;"><strong>2-Day Probability:</strong> ${feature.properties.PROB2DAY}</p>
-                    <p style="margin: 4px 0;"><strong>2-Day Risk:</strong> ${feature.properties.RISK2DAY}</p>
-                    <p style="margin: 4px 0;"><strong>7-Day Probability:</strong> ${feature.properties.PROB7DAY}</p>
-                    <p style="margin: 4px 0;"><strong>7-Day Risk:</strong> ${feature.properties.RISK7DAY}</p>
-                  </div>
-                `);
-              }
-            }
-          }).addTo(map);
-        });
-
-        return () => {
-          layers.forEach(layer => map.removeLayer(layer));
-        };
-      }
-    }, [map, cycloneShapefiles]);
-
-    return null;
-  };
   useEffect(() => {
     if (userPosition) {
       setMapCenter(userPosition);
@@ -181,7 +123,7 @@ const Map = ({ onLocationClick, userPosition }) => {
         attribution='&copy; <a href="http://www.openseamap.org">OpenSeaMap</a> contributors'
       />
       <MapEvents />
-      <CycloneLayer />
+      <CycloneLayer cycloneShapefiles={cycloneShapefiles} />
       {marker && <Marker position={marker} icon={customIcon} />}
       {userPosition && <Marker position={userPosition} icon={boatIcon} />}
       <ScaleControl position="bottomleft" imperial={false} />
