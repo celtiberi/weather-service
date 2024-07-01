@@ -11,6 +11,17 @@ import { fetchRssData, getShapefiles } from './cyclone-data.mjs';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
 
+// Catch uncaught exceptions
+process.on('uncaughtException', (err) => {
+  logger.error('Uncaught Exception:', err);
+  process.exit(1); // Exit the process to avoid unknown state
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1); // Exit the process to avoid unknown state
+});
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -34,7 +45,8 @@ app.use(cors({
     'http://channel-16.com:3000', 
     'https://channel-16.com:3000', 
     'http://channel-16.com', 
-    'https://channel-16.com', 
+    'https://channel-16.com',
+    'http://www.channel-16.com',
     'https://www.channel-16.com', 
     'https://www.channel-16.com/api',
     'http://www.channel-16.com/api'
