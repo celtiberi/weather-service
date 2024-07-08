@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, useMapEvents, Marker, ScaleControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -17,7 +17,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: shadowUrl.src,
 });
 
-const Map = ({ onLocationClick, userPosition, cycloneShapefiles, hurricaneShapefiles, hurricaneInfo }) => {
+const Map = ({ onLocationClick, userPosition, cycloneShapefiles, hurricaneShapefiles }) => {
   const [marker, setMarker] = useState(null);
   const [mapCenter] = useState([30, -40]);
 
@@ -77,9 +77,7 @@ const Map = ({ onLocationClick, userPosition, cycloneShapefiles, hurricaneShapef
       />
       <MapEvents />
       {cycloneShapefiles && <CycloneLayer cycloneShapefiles={cycloneShapefiles} />}
-      {hurricaneShapefiles && hurricaneInfo && (
-        <HurricaneLayer hurricaneShapefiles={hurricaneShapefiles} hurricaneInfo={hurricaneInfo} />
-      )}
+      {hurricaneShapefiles && <HurricaneLayer hurricaneShapefiles={hurricaneShapefiles} />}
       {marker && <Marker position={marker} icon={customIcon} />}
       {userPosition && <Marker position={userPosition} icon={boatIcon} />}
       <ScaleControl position="bottomleft" imperial={false} />

@@ -10,11 +10,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const NHC_GIS_URL = 'https://www.nhc.noaa.gov/gis/';
-const NHC_URL = 'https://www.nhc.noaa.gov/cyclones/'; 
-const HURRICANE_DIR = path.join(__dirname, 'hurricanes'); // Adjust this path as needed
+const NHC_URL = 'https://www.nhc.noaa.gov/cyclones/';
+const HURRICANE_DIR = path.join(__dirname, 'hurricanes');
 
 let cachedHurricaneShapefiles = null;
-let cachedHurricaneData = null;
+let cachedHurricaneInfo = null;
 let lastUpdate = null;
 
 const hurricaneDataPromise = (async () => {
@@ -32,19 +32,19 @@ async function getShapefiles() {
     console.log('Hurricane data is ready. Returning cached shapefiles.');
     return cachedHurricaneShapefiles;
   } catch (error) {
-    console.error('Error getting hurricane data:', error);
+    console.error('Error getting hurricane shapefiles:', error);
     throw error;
   }
 }
 
-async function getImages() {
+async function getHurricaneInformation() {
   try {
     console.log('Waiting for hurricane data to be ready...');
     await hurricaneDataPromise;
-    console.log('Hurricane data is ready. Returning cached data.');
-    return cachedHurricaneData;
+    console.log('Hurricane data is ready. Returning cached information.');
+    return cachedHurricaneInfo;
   } catch (error) {
-    console.error('Error getting hurricane data:', error);
+    console.error('Error getting hurricane information:', error);
     throw error;
   }
 }
@@ -57,30 +57,48 @@ async function fetchHurricaneLinks() {
   $('table').first().find('tr').each((i, row) => {
     const cells = $(row).find('td');
     if (cells.length >= 2) {
-      const name = $(cells[0]).text().trim();
-      const shpLink = $(cells[1]).find('a[href$=".zip"]').attr('href');
-      if (name && shpLink) {
-        hurricaneLinks.push({ name, shpLink });
+      const titleCell = $(cells[0]);
+      if (titleCell.find('b').text().includes('Advisory Forecast Track, Cone of Uncertainty')) {
+        $(cells[1]).find('a[href$=".zip"]').each((j, link) => {
+          const href = $(link).attr('href');
+          if (href && href.includes('_5day_')) {
+            const name = href.match(/al\d{6}/)[0];
+            hurricaneLinks.push({ name, shpLink: href });
+          }
+        });
       }
     }
   });
 
+  console.log('Fetched hurricane links:', hurricaneLinks);
   return hurricaneLinks;
 }
 
 async function downloadAndExtractShapefile(hurricane) {
   const { name, shpLink } = hurricane;
-  const hurricaneDir = path.join(HURRICANE_DIR, name);
+  const hurricaneDir = path.join(HURRICANE_DIR, `AdvisoryForecastTrack_${name}`);
 
   await fs.mkdir(hurricaneDir, { recursive: true });
 
   const downloadLink = new URL(shpLink, NHC_GIS_URL).href;
+  console.log(`Downloading shapefile from: ${downloadLink}`);
+  
   try {
-    const zipResponse = await axios.get(downloadLink, { responseType: 'arraybuffer' });
+    const zipResponse = await axios.get(downloadLink, { 
+      responseType: 'arraybuffer',
+      timeout: 30000 // 30 seconds timeout
+    });
+    console.log(`Download complete. File size: ${zipResponse.data.byteLength} bytes`);
+
     const zip = new AdmZip(zipResponse.data);
+    const zipEntries = zip.getEntries();
+    console.log(`Zip file contents: ${zipEntries.map(entry => entry.entryName).join(', ')}`);
+
     zip.extractAllTo(hurricaneDir, true);
 
-    console.log(`Shapefile for ${name} downloaded and extracted to: ${hurricaneDir}`);
+    console.log(`Shapefile for ${name} extracted to: ${hurricaneDir}`);
+    const extractedFiles = await fs.readdir(hurricaneDir);
+    console.log(`Extracted files: ${extractedFiles.join(', ')}`);
   } catch (error) {
     console.error(`Failed to download or extract shapefile from ${downloadLink}`, error);
     throw error;
@@ -117,16 +135,13 @@ async function readHurricaneShapefiles() {
     const files = await fs.readdir(hurricaneDir);
     const shpFiles = files.filter(file => file.endsWith('.shp'));
 
-    hurricaneData[hurricaneName] = {};
-
-    for (const shpFile of shpFiles) {
-      const shpPath = path.join(hurricaneDir, shpFile);
+    if (shpFiles.length > 0) {
+      const shpPath = path.join(hurricaneDir, shpFiles[0]);
       console.log(`Reading shapefile: ${shpPath}`);
       
       const geojson = await readShapefile(shpPath);
       if (geojson) {
-        const layerName = path.parse(shpFile).name;
-        hurricaneData[hurricaneName][layerName] = geojson;
+        hurricaneData[hurricaneName] = geojson;
         console.log(`Finished reading shapefile: ${shpPath}, features count: ${geojson.features.length}`);
       }
     }
@@ -135,70 +150,47 @@ async function readHurricaneShapefiles() {
   return hurricaneData;
 }
 
-async function getHurricaneData() {
+async function fetchHurricaneInformation() {
   try {
     const response = await axios.get(NHC_URL);
     const $ = cheerio.load(response.data);
     
-    const hurricaneData = {};
+    const hurricaneInfo = {};
 
-    // Find all storm tables
     $('table').each((i, table) => {
       const $table = $(table);
       const stormName = $table.find('a[name]').attr('name');
       
       if (stormName) {
-        hurricaneData[stormName] = {
+        hurricaneInfo[stormName] = {
           name: stormName,
           type: $table.find('td.hdr b').text(),
           details: {},
           products: {}
         };
 
-        // Extract storm details
         $table.find('td.reg').first().text().split('\n').forEach(line => {
           const [key, value] = line.split(':').map(s => s.trim());
           if (key && value) {
-            hurricaneData[stormName].details[key] = value;
+            hurricaneInfo[stormName].details[key] = value;
           }
         });
 
-        // Extract links to products
         $table.find('a').each((j, link) => {
           const $link = $(link);
           const href = $link.attr('href');
           const text = $link.text().trim();
           
           if (href && text) {
-            hurricaneData[stormName].products[text] = href.startsWith('http') ? href : `https://www.nhc.noaa.gov${href}`;
+            hurricaneInfo[stormName].products[text] = href.startsWith('http') ? href : `https://www.nhc.noaa.gov${href}`;
           }
         });
       }
     });
 
-    return hurricaneData;
+    return hurricaneInfo;
   } catch (error) {
-    console.error('Error fetching hurricane data:', error);
-    throw error;
-  }
-}
-
-async function getHurricaneImages() {
-  try {
-    const hurricaneData = await getHurricaneData();
-    
-    // Create a directory for each storm
-    for (const [stormName, stormData] of Object.entries(hurricaneData)) {
-      const stormDir = path.join(HURRICANE_DIR, stormName);
-      await fs.mkdir(stormDir, { recursive: true });
-      
-      // Save storm data as JSON
-      await fs.writeFile(path.join(stormDir, 'data.json'), JSON.stringify(stormData, null, 2));
-    }
-
-    return hurricaneData;
-  } catch (error) {
-    console.error('Error processing hurricane data:', error);
+    console.error('Error fetching hurricane information:', error);
     throw error;
   }
 }
@@ -211,7 +203,6 @@ async function updateHurricaneData() {
     const hurricaneLinks = await fetchHurricaneLinks();
     console.log('Hurricane links:', hurricaneLinks);
 
-    // Download and extract new shapefiles
     for (const hurricane of hurricaneLinks) {
       await downloadAndExtractShapefile(hurricane);
     }
@@ -219,8 +210,8 @@ async function updateHurricaneData() {
     cachedHurricaneShapefiles = await readHurricaneShapefiles();
     console.log('Hurricane shapefiles updated at', new Date());
 
-    cachedHurricaneData = await getHurricaneImages();
-    console.log('Hurricane data updated at', new Date());
+    cachedHurricaneInfo = await fetchHurricaneInformation();
+    console.log('Hurricane information updated at', new Date());
 
     lastUpdate = new Date();
   } catch (error) {
@@ -232,4 +223,4 @@ async function updateHurricaneData() {
 setInterval(updateHurricaneData, 30 * 60 * 1000);
 
 // Export functions
-export { getShapefiles, getImages };
+export { getShapefiles, getHurricaneInformation };

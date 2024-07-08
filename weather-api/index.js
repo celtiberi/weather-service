@@ -8,7 +8,7 @@ import morgan from 'morgan';
 import { createLogger, nws } from '../shared/module/index.mjs';
 import { analyzeWeatherForecast } from './forecast-analysis.mjs';
 import { fetchRssData, getShapefiles } from './cyclone-data.mjs';
-import { getShapefiles as getHurricaneShapefiles, getImages as getHurricaneImages } from './hurricane-data.mjs';
+import { getShapefiles as getHurricaneShapefiles, getHurricaneInformation } from './hurricane-data.mjs';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
 
@@ -212,7 +212,7 @@ app.get('/hurricane-shapefiles', async (req, res) => {
 
 app.get('/hurricane-info', async (req, res) => {
   try {
-    const hurricaneImages = await getHurricaneImages();
+    const hurricaneImages = await getHurricaneInformation();
     res.json(hurricaneImages);
   } catch (error) {
     logger.error('Error fetching hurricane images:', error);

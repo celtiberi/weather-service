@@ -1,59 +1,57 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 
-const HurricaneLayer = ({ hurricaneShapefiles, hurricaneInfo }) => {
+const HurricaneLayer = ({ hurricaneShapefiles }) => {
   const map = useMap();
 
   useEffect(() => {
-    if (hurricaneShapefiles && hurricaneInfo) {
-      const layers = Object.entries(hurricaneShapefiles).map(([name, data]) => {
-        // Check if the data has a FeatureCollection
-        if (data && data.features && Array.isArray(data.features)) {
-          return L.geoJSON(data, {
-            style: (feature) => {
-              // You can customize the style based on feature properties
-              return { color: '#FF0000', weight: 2, opacity: 0.7 };
-            },
-            onEachFeature: (feature, layer) => {
-              if (feature.properties) {
-                layer.bindPopup(`
-                  <h3>${name}</h3>
-                  <p>Type: ${feature.properties.STORMTYPE || 'N/A'}</p>
-                  <p>Wind Speed: ${feature.properties.MAXWIND || 'N/A'} kt</p>
-                  <p>Pressure: ${feature.properties.MSLP || 'N/A'} mb</p>
-                `);
-              }
-            }
-          }).addTo(map);
-        } else if (data && data.type === "FeatureCollection") {
-          // If the data is already a FeatureCollection, use it directly
-          return L.geoJSON(data, {
-            style: (feature) => {
-              return { color: '#FF0000', weight: 2, opacity: 0.7 };
-            },
-            onEachFeature: (feature, layer) => {
-              if (feature.properties) {
-                layer.bindPopup(`
-                  <h3>${name}</h3>
-                  <p>RADII: ${feature.properties.RADII || 'N/A'}</p>
-                  <p>STORMID: ${feature.properties.STORMID || 'N/A'}</p>
-                  <p>VALIDTIME: ${feature.properties.VALIDTIME || 'N/A'}</p>
-                `);
-              }
-            }
-          }).addTo(map);
-        } else {
-          console.error('Invalid data structure for hurricane shapefile:', name);
-          return null;
-        }
+    if (!hurricaneShapefiles) return;
+
+    const layers = Object.entries(hurricaneShapefiles).map(([name, data]) => {
+      if (data.type !== 'FeatureCollection' || !data.features.length) return null;
+
+      const feature = data.features[0];
+      const { coordinates } = feature.geometry;
+      const { STORMNAME, STORMTYPE, ADVISNUM } = feature.properties;
+
+      // Create a polyline for the hurricane track
+      const polyline = L.polyline(coordinates.map(coord => [coord[1], coord[0]]), {
+        color: 'red',
+        weight: 3,
+        opacity: 0.7,
+      }).addTo(map);
+
+      // Add markers for each point on the track
+      const markers = coordinates.map((coord, index) => {
+        const isLastPoint = index === coordinates.length - 1;
+        const markerColor = isLastPoint ? 'red' : 'blue';
+        const markerSize = isLastPoint ? 10 : 6;
+
+        return L.circleMarker([coord[1], coord[0]], {
+          radius: markerSize,
+          fillColor: markerColor,
+          color: '#000',
+          weight: 1,
+          opacity: 1,
+          fillOpacity: 0.8,
+        }).addTo(map).bindPopup(`
+          <b>${STORMNAME} (${STORMTYPE})</b><br>
+          Advisory: ${ADVISNUM}<br>
+          Position: ${coord[1].toFixed(2)}°N, ${coord[0].toFixed(2)}°W
+        `);
       });
 
-      return () => {
-        layers.forEach(layer => layer && map.removeLayer(layer));
-      };
-    }
-  }, [map, hurricaneShapefiles, hurricaneInfo]);
+      // Fit the map to the hurricane track
+      map.fitBounds(polyline.getBounds());
+
+      return [polyline, ...markers];
+    }).flat().filter(Boolean);
+
+    return () => {
+      layers.forEach(layer => map.removeLayer(layer));
+    };
+  }, [map, hurricaneShapefiles]);
 
   return null;
 };
