@@ -1,0 +1,30 @@
+{
+  "name": "One-E",
+  "type": "Tropical Depression One-E",
+  "details": {
+    "9": "00 AM CST Thu Jul 4",
+    "Location": "17.0°N 105.9°W",
+    "Moving": "NW at 9 mph",
+    "Min pressure": "1007 mb",
+    "Max sustained": "35 mph"
+  },
+  "products": {
+    "Satellite": "https://www.star.nesdis.noaa.gov/goes/floater.php?stormid=EP012024",
+    "Buoys": "https://www.ndbc.noaa.gov/radial_search.php?storm=ep1",
+    "Grids": "http://digital.weather.gov/?layers=00BFTFTTTTT&region=7&element=9&mxmz=false&barbs=true&zoom=5&lat=17.0&lon=-105.9",
+    "Storm Archive": "https://www.nhc.noaa.gov/archive/2024/ONE-E.shtml?",
+    "PublicAdvisory\n#1": "https://www.nhc.noaa.gov/text/refresh/MIATCPEP1+shtml/041448.shtml",
+    "ForecastAdvisory\n#1": "https://www.nhc.noaa.gov/text/refresh/MIATCMEP1+shtml/041448.shtml",
+    "ForecastDiscussion\n#1": "https://www.nhc.noaa.gov/text/refresh/MIATCDEP1+shtml/041449.shtml",
+    "Wind SpeedProbabilities\n#1": "https://www.nhc.noaa.gov/text/refresh/MIAPWSEP1+shtml/041448.shtml",
+    "(más información)": "https://www.weather.gov/translate/",
+    "AvisoPublico": "https://www.nhc.noaa.gov/text/refresh/MIATASEP1+shtml/041452.shtml",
+    "PronósticoDiscusión": "https://www.nhc.noaa.gov/text/refresh/MIATDSEP1+shtml/041454.shtml",
+    "Wind SpeedProbabilities": "https://www.nhc.noaa.gov/refresh/graphics_ep1+shtml/145024.shtml?tswind120#contents",
+    "Arrival Timeof Winds": "https://www.nhc.noaa.gov/refresh/graphics_ep1+shtml/145024.shtml?mltoa34#contents",
+    "WindHistory": "https://www.nhc.noaa.gov/refresh/graphics_ep1+shtml/145024.shtml?swath#contents",
+    "Warnings/ConeInteractive Map": "https://www.nhc.noaa.gov/refresh/graphics_ep1+shtml/145024.shtml?gm_track#contents",
+    "Warnings/ConeStatic Images": "https://www.nhc.noaa.gov/refresh/graphics_ep1+shtml/145024.shtml?cone#contents",
+    "Warnings andSurface Wind": "https://www.nhc.noaa.gov/refresh/graphics_ep1+shtml/145024.shtml?radii#contents"
+  }
+}

@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   weather-api:
-    build: 
+    build:
       context: .
       dockerfile: ./weather-api/Dockerfile.dev
     image: docker.io/celtiberi/weather-api:dev
@@ -31,7 +31,7 @@ services:
       - weather
 
   weather-web:
-    build: 
+    build:
       context: ./weather-web
       dockerfile: Dockerfile.dev
     image: docker.io/celtiberi/weather-web:dev
@@ -47,7 +47,6 @@ services:
     networks:
       - weather
 
-# This should be at the root level, not under services
 networks:
   weather:
     name: weather

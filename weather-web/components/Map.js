@@ -1,7 +1,5 @@
-// components/Map.js
-
-import { useState, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, useMapEvents, Marker, ScaleControl, useMap } from 'react-leaflet';
+import React, { useState, useMemo } from 'react';
+import { MapContainer, TileLayer, useMapEvents, Marker, ScaleControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -10,6 +8,7 @@ import iconUrl from 'leaflet/dist/images/marker-icon.png';
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
 
 import CycloneLayer from './CycloneLayer';
+import HurricaneLayer from './HurricaneLayer';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -18,12 +17,10 @@ L.Icon.Default.mergeOptions({
   shadowUrl: shadowUrl.src,
 });
 
-const Map = ({ onLocationClick, userPosition }) => {
+const Map = ({ onLocationClick, userPosition, cycloneShapefiles, hurricaneShapefiles, hurricaneInfo }) => {
   const [marker, setMarker] = useState(null);
-  const [mapCenter, setMapCenter] = useState([30, -40]);
-  const [cycloneShapefiles, setCycloneShapefiles] = useState(null);
+  const [mapCenter] = useState([30, -40]);
 
-  // Create a custom icon for click markers
   const customIcon = useMemo(
     () =>
       new L.DivIcon({
@@ -39,20 +36,6 @@ const Map = ({ onLocationClick, userPosition }) => {
     []
   );
 
-  // Create a custom X icon for cyclone markers
-  const createCycloneIcon = (color) => L.divIcon({
-    html: `
-      <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <line x1="4" y1="4" x2="20" y2="20" stroke="${color}" stroke-width="5"/>
-        <line x1="20" y1="4" x2="4" y2="20" stroke="${color}" stroke-width="5"/>
-      </svg>
-    `,
-    className: '',
-    iconSize: [16, 16],
-    iconAnchor: [8, 8],
-  });
-
-  // Create a boat icon for user position
   const boatIcon = useMemo(
     () =>
       new L.DivIcon({
@@ -68,45 +51,15 @@ const Map = ({ onLocationClick, userPosition }) => {
     []
   );
 
-  useEffect(() => {
-    const fetchCycloneData = async () => {
-      try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-        const shapefilesResponse = await fetch(`${baseUrl}/cyclone-shapefiles`);
-        const shapefilesData = await shapefilesResponse.json();
-        console.log('Fetched cyclone data:', shapefilesData);
-        setCycloneShapefiles(shapefilesData);
-      } catch (error) {
-        console.error('Error fetching cyclone data:', error);
-      }
-    };
-
-    fetchCycloneData();
-  }, []);
-
   const MapEvents = () => {
-    const map = useMap();
     useMapEvents({
       click: (e) => {
         setMarker(e.latlng);
         onLocationClick(e.latlng);
       },
     });
-
-    useEffect(() => {
-      if (userPosition) {
-        map.setView(userPosition, map.getZoom());
-      }
-    }, [userPosition, map]);
-
     return null;
   };
-
-  useEffect(() => {
-    if (userPosition) {
-      setMapCenter(userPosition);
-    }
-  }, [userPosition]);
 
   return (
     <MapContainer
@@ -123,7 +76,10 @@ const Map = ({ onLocationClick, userPosition }) => {
         attribution='&copy; <a href="http://www.openseamap.org">OpenSeaMap</a> contributors'
       />
       <MapEvents />
-      <CycloneLayer cycloneShapefiles={cycloneShapefiles} />
+      {cycloneShapefiles && <CycloneLayer cycloneShapefiles={cycloneShapefiles} />}
+      {hurricaneShapefiles && hurricaneInfo && (
+        <HurricaneLayer hurricaneShapefiles={hurricaneShapefiles} hurricaneInfo={hurricaneInfo} />
+      )}
       {marker && <Marker position={marker} icon={customIcon} />}
       {userPosition && <Marker position={userPosition} icon={boatIcon} />}
       <ScaleControl position="bottomleft" imperial={false} />

@@ -12,6 +12,7 @@
     "@pager/jackrabbit": "^5.5.0",
     "adm-zip": "^0.5.14",
     "axios": "^1.7.2",
+    "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.17.1",

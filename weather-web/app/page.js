@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import dynamic from 'next/dynamic';
 import Registration from '../components/Registration';
 import PositionUpdater from '../components/PositionUpdater';
 import moment from 'moment';
 import CycloneInfo from '../components/CycloneInfo';
+import HurricaneInfo from '../components/HurricaneInfo';
 import Image from 'next/image'; 
+import ButtonGroup from '../components/ButtonGroup';
+import axiosInstance from '../utils/axiosConfig'; 
 
 const Map = dynamic(() => import('../components/Map'), {
   ssr: false,
@@ -30,29 +32,64 @@ const Home = () => {
   const [userPosition, setUserPosition] = useState(null);
   const [isCycloneInfoOpen, setIsCycloneInfoOpen] = useState(false);
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
+  const [isHurricaneInfoOpen, setIsHurricaneInfoOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [cycloneShapefiles, setCycloneShapefiles] = useState(null);
+  const [hurricaneShapefiles, setHurricaneShapefiles] = useState(null);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [dataError, setDataError] = useState({});
+  const [hurricaneInfo, setHurricaneInfo] = useState(null);
+  const [cycloneInfo, setCycloneInfo] = useState(null);
+  const [hurricaneInfoError, setHurricaneInfoError] = useState(null);
 
   useEffect(() => {
-    // Function to update user position
+    const fetchData = async (url, setStateFunction, errorMessage) => {
+      try {
+        const response = await axiosInstance.get(url);
+        setStateFunction(response.data);
+      } catch (error) {
+        console.error(`Error fetching data from ${url}:`, error);
+        setDataError(prev => ({...prev, [url]: errorMessage}));
+      }
+    };
+  
+    const fetchAllData = async () => {
+      setDataLoading(true);
+      setDataError({});
+  
+      const dataFetches = [
+        fetchData('/cyclone-data', (data) => setCycloneInfo(data.rss.channel[0].item), 'Failed to fetch cyclone data.'),
+        fetchData('/cyclone-shapefiles', setCycloneShapefiles, 'Failed to fetch cyclone shapefiles.'),
+        fetchData('/hurricane-info', setHurricaneInfo, 'Failed to fetch hurricane information.'),
+        //fetchData('/hurricane-shapefiles', setHurricaneShapefiles, 'Failed to fetch hurricane shapefiles.')
+      ];
+  
+      await Promise.all(dataFetches);
+      setDataLoading(false);
+    };
+  
+    fetchAllData();
+  }, []);
+
+
+  useEffect(() => {
     const updateUserPosition = (position) => {
       setUserPosition([position.coords.latitude, position.coords.longitude]);
     };
 
-    // Watch user's position
     const watchId = navigator.geolocation.watchPosition(updateUserPosition);
 
-    // Cleanup
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
+
 
   const handleLocationClick = async (latlng) => {
     setCoordinates(latlng);
     setLoading(true);
     setError(null);
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-    const url = `${baseUrl}/point-forecast?lat=${latlng.lat}&lon=${latlng.lng}`;
+    const url = `/point-forecast?lat=${latlng.lat}&lon=${latlng.lng}`;
     try {
-      const response = await axios.get(url);
+      const response = await axiosInstance.get(url, { timeout: 60000 });
       setForecast(response.data.forecasts);
       setForecastAnalysis(response.data.forecastsAnalysis);
     } catch (error) {
@@ -83,41 +120,24 @@ const Home = () => {
     }
   };
 
-  const [cycloneInfo, setCycloneInfo] = useState(null);
-
-  useEffect(() => {
-    const fetchCycloneInfo = async () => {
-      try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-        const url = `${baseUrl}/cyclone-data`;
-        console.log("Fetching cyclone data from URL:", url);
-        const response = await fetch(url);
-        const data = await response.json();
-        setCycloneInfo(data.rss.channel[0].item);
-      } catch (error) {
-        console.error('Error fetching cyclone info:', error);
-      }
-    };
-
-    fetchCycloneInfo();
-  }, []);
-
   const closeModal = () => setSelectedImage(null);
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold text-center sm:text-left">Weather Forecast</h1>
       
+      <ButtonGroup 
+        isInstructionsOpen={isInstructionsOpen}
+        setIsInstructionsOpen={setIsInstructionsOpen}
+        isCycloneInfoOpen={isCycloneInfoOpen}
+        setIsCycloneInfoOpen={setIsCycloneInfoOpen}
+        isHurricaneInfoOpen={isHurricaneInfoOpen}
+        setIsHurricaneInfoOpen={setIsHurricaneInfoOpen}
+      />
+
       <Registration />
       {userId && <PositionUpdater userId={userId} />}
       
-      <button
-        onClick={() => setIsInstructionsOpen(!isInstructionsOpen)}
-        className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-      >
-        {isInstructionsOpen ? 'Hide Instructions' : 'Show Instructions'}
-      </button>
-
       {isInstructionsOpen && (
         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
           <h2 className="text-xl font-semibold mb-2">NWS Marine Weather Analysis</h2>
@@ -138,19 +158,51 @@ const Home = () => {
         </div>
       )}
 
-      <div className="h-[300px] sm:h-[400px] w-full">
-        <Map onLocationClick={handleLocationClick} userPosition={userPosition} />
-      </div>
-      
-      <button
-        onClick={() => setIsCycloneInfoOpen(!isCycloneInfoOpen)}
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-      >
-        {isCycloneInfoOpen ? 'Hide Tropical Cyclone Data' : 'Show Tropical Cyclone Data'}
-      </button>
+    
 
+<div className="space-y-4">
+  {Object.values(dataError).length > 0 && (
+    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+      <strong className="font-bold">Errors:</strong>
+      <ul className="mt-2 list-disc list-inside">
+        {Object.values(dataError).map((error, index) => (
+          <li key={index}>{error}</li>
+        ))}
+      </ul>
+    </div>
+  )}
+
+  <div className="h-[300px] sm:h-[400px] w-full relative">
+    {dataLoading && (
+      <div className="absolute inset-0 bg-gray-200 bg-opacity-75 flex items-center justify-center z-10">
+        <div className="text-lg font-semibold">Loading map data...</div>
+      </div>
+    )}
+    <Map 
+      onLocationClick={handleLocationClick} 
+      userPosition={userPosition}
+      cycloneShapefiles={cycloneShapefiles}
+      hurricaneShapefiles={hurricaneShapefiles}
+      hurricaneInfo={hurricaneInfo}
+    />
+  </div>
+</div>
+      
       {isCycloneInfoOpen && <CycloneInfo setSelectedImage={setSelectedImage} />}
-      {/* Modal for full-size image */}
+      {isHurricaneInfoOpen && (
+        <div>
+          <h2 className="text-xl font-bold mb-2">Hurricane Information</h2>
+          {hurricaneInfoError ? (
+            <div className="text-red-500">{hurricaneInfoError}</div>
+          ) : hurricaneInfo ? (
+            <HurricaneInfo hurricaneInfo={hurricaneInfo} />
+          ) : (
+            <div>Loading hurricane information...</div>
+          )}
+        </div>
+      )}
+
+
       {selectedImage && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[1000]" onClick={closeModal}>
           <div className="max-w-4xl max-h-[90vh] w-[90vw] p-4 relative bg-white rounded-lg" onClick={(e) => e.stopPropagation()}>
@@ -189,14 +241,6 @@ const Home = () => {
           <span className="block sm:inline">{error}</span>
         </div>
       )}
-      {/* <button
-        onClick={() => setIsCycloneInfoOpen(!isCycloneInfoOpen)}
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-      >
-        {isCycloneInfoOpen ? 'Hide Tropical Cyclone Data' : 'Show Tropical Cyclone Data'}
-      </button>
-
-      {isCycloneInfoOpen && <CycloneInfo />} */}
       {forecastAnalysis && forecast && (
         <div className="bg-blue-100 p-4 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-2">Forecast Analysis</h2>

@@ -33,29 +33,29 @@ services:
   #   networks:
   #     - weather
 
-  grib-downloader:
-    build: 
-      context: .
-      dockerfile: ./grib-downloader/Dockerfile
-    image: docker.io/celtiberi/grib-downloader:latest
-    container_name: grib-downloader
-    restart: always
-    ports:
-      - "9231:9229"
-    volumes:
-      - grib_data:/app/grib_files
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    environment:
-      MONGODB_URI: /run/secrets/mongodb_uri
-      RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
-      LOGSTASH_HOST: localhost
-      LOGSTASH_PORT: 5044
-    secrets:
-      - mongodb_uri
-    networks:
-      - weather
+  # grib-downloader:
+  #   build: 
+  #     context: .
+  #     dockerfile: ./grib-downloader/Dockerfile
+  #   image: docker.io/celtiberi/grib-downloader:latest
+  #   container_name: grib-downloader
+  #   restart: always
+  #   ports:
+  #     - "9231:9229"
+  #   volumes:
+  #     - grib_data:/app/grib_files
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   environment:
+  #     MONGODB_URI: /run/secrets/mongodb_uri
+  #     RABBITMQ_URL: amqp://sailor:sailor@rabbitmq:5672
+  #     LOGSTASH_HOST: localhost
+  #     LOGSTASH_PORT: 5044
+  #   secrets:
+  #     - mongodb_uri
+  #   networks:
+  #     - weather
 
   # krakend:
   #   image: devopsfaith/krakend

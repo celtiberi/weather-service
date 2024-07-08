@@ -8,6 +8,7 @@ import morgan from 'morgan';
 import { createLogger, nws } from '../shared/module/index.mjs';
 import { analyzeWeatherForecast } from './forecast-analysis.mjs';
 import { fetchRssData, getShapefiles } from './cyclone-data.mjs';
+import { getShapefiles as getHurricaneShapefiles, getImages as getHurricaneImages } from './hurricane-data.mjs';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
 
@@ -57,6 +58,10 @@ app.use(cors({
 
 // Set up morgan for HTTP request logging
 app.use(morgan('dev'));
+
+const HURRICANE_DIR = path.join(__dirname, 'hurricanes'); // Adjust this path as needed
+app.use('/hurricanes', express.static(HURRICANE_DIR));
+
 
 // RabbitMQ setup
 logger.info(`RABBITMQ_URL: ${process.env.RABBITMQ_URL}`);
@@ -195,9 +200,36 @@ app.get('/cyclone-shapefiles', async (req, res) => {
   }
 });
 
+app.get('/hurricane-shapefiles', async (req, res) => {
+  try {
+    const hurricaneShapefiles = await getHurricaneShapefiles();
+    res.json(hurricaneShapefiles);
+  } catch (error) {
+    logger.error('Error fetching hurricane shapefiles:', error);
+    res.status(500).json({ error: 'Failed to fetch hurricane shapefiles' });
+  }
+});
+
+app.get('/hurricane-info', async (req, res) => {
+  try {
+    const hurricaneImages = await getHurricaneImages();
+    res.json(hurricaneImages);
+  } catch (error) {
+    logger.error('Error fetching hurricane images:', error);
+    res.status(500).json({ error: 'Failed to fetch hurricane images' });
+  }
+});
+
 async function connectToMongoDB() {
 
-  const mongodbUri = 'mongodb://mongodb:27017/ocean';
+  let mongodbUri="mongodb://mongodb:27017/ocean"
+  // try {
+  //   mongodbUri = await fs.promises.readFile('/run/secrets/mongodb_uri', 'utf8');
+  // } catch (error) {
+  //   console.warn('Secret not found, using default');
+  //   mongodbUri = "mongodb://127.0.0.1:27017/ocean";
+  // }]
+  console.log('MongoDB URI:', mongodbUri);
   try {
     await mongoose.connect(mongodbUri, {
       serverSelectionTimeoutMS: 30000,
