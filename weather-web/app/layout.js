@@ -1,7 +1,6 @@
 import 'tailwindcss/tailwind.css';
 import 'leaflet/dist/leaflet.css';
 import Script from 'next/script';
-import * as gtag from '../lib/gtag';
 
 const RootLayout = ({ children }) => {
   return (
@@ -20,22 +19,16 @@ const RootLayout = ({ children }) => {
         {/* Google Analytics */}
         <Script
           strategy="afterInteractive"
-          src={`https://www.googletagmanager.com/gtag/js?id=${gtag.GA_TRACKING_ID}`}
+          src="https://www.googletagmanager.com/gtag/js?id=G-VWT52SCJCP"
         />
-        <Script
-          id="gtag-init"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '${gtag.GA_TRACKING_ID}', {
-                page_path: window.location.pathname,
-              });
-            `,
-          }}
-        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-VWT52SCJCP');
+          `}
+        </Script>
       </head>
       <body>
         <div className="container mx-auto py-4 px-4">{children}</div>
