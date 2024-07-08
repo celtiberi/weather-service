@@ -1,17 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import useAnalytics from '../hooks/useAnalytics';
 
 const HurricaneInfo = ({ hurricaneInfo }) => {
   const [selectedHurricane, setSelectedHurricane] = useState(null);
+  const { trackEvent } = useAnalytics();
 
-  useEffect(() => {
-    if (hurricaneInfo && Object.keys(hurricaneInfo).length > 0) {
-      setSelectedHurricane(Object.keys(hurricaneInfo)[0]);
-    }
-  }, [hurricaneInfo]);
-
-  if (!hurricaneInfo || Object.keys(hurricaneInfo).length === 0) {
-    return <div>No hurricane information available.</div>;
-  }
+  const handleHurricaneSelect = (name) => {
+    setSelectedHurricane(name);
+    // Track the event when a user selects a hurricane
+    trackEvent('view_hurricane_details', 'engagement', name);
+  };
 
   return (
     <div className="bg-white shadow-md rounded-lg p-6">
@@ -23,7 +21,7 @@ const HurricaneInfo = ({ hurricaneInfo }) => {
             {Object.entries(hurricaneInfo).map(([name, data]) => (
               <li key={name} className="mb-2">
                 <button 
-                  onClick={() => setSelectedHurricane(name)}
+                  onClick={() => handleHurricaneSelect(name)}
                   className={`text-blue-500 hover:text-blue-700 ${selectedHurricane === name ? 'font-bold' : ''}`}
                 >
                   {name} - {data.type}
