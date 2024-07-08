@@ -30,9 +30,6 @@ const Home = () => {
   const [activeForecastType, setActiveForecastType] = useState(ForecastType.COASTAL);
   const [userId, setUserId] = useState(typeof window !== 'undefined' ? localStorage.getItem('userId') : null);
   const [userPosition, setUserPosition] = useState(null);
-  const [isCycloneInfoOpen, setIsCycloneInfoOpen] = useState(false);
-  const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
-  const [isHurricaneInfoOpen, setIsHurricaneInfoOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [cycloneShapefiles, setCycloneShapefiles] = useState(null);
   const [hurricaneShapefiles, setHurricaneShapefiles] = useState(null);
@@ -40,7 +37,7 @@ const Home = () => {
   const [dataError, setDataError] = useState({});
   const [hurricaneInfo, setHurricaneInfo] = useState(null);
   const [cycloneInfo, setCycloneInfo] = useState(null);
-  const [hurricaneInfoError, setHurricaneInfoError] = useState(null);
+  const [activeButton, setActiveButton] = useState(null);
 
   useEffect(() => {
     const fetchData = async (url, setStateFunction, errorMessage) => {
@@ -61,7 +58,7 @@ const Home = () => {
         fetchData('/cyclone-data', (data) => setCycloneInfo(data.rss.channel[0].item), 'Failed to fetch cyclone data.'),
         fetchData('/cyclone-shapefiles', setCycloneShapefiles, 'Failed to fetch cyclone shapefiles.'),
         fetchData('/hurricane-info', setHurricaneInfo, 'Failed to fetch hurricane information.'),
-        //fetchData('/hurricane-shapefiles', setHurricaneShapefiles, 'Failed to fetch hurricane shapefiles.')
+        fetchData('/hurricane-shapefiles', setHurricaneShapefiles, 'Failed to fetch hurricane shapefiles.')
       ];
   
       await Promise.all(dataFetches);
@@ -70,7 +67,6 @@ const Home = () => {
   
     fetchAllData();
   }, []);
-
 
   useEffect(() => {
     const updateUserPosition = (position) => {
@@ -82,14 +78,13 @@ const Home = () => {
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
-
   const handleLocationClick = async (latlng) => {
     setCoordinates(latlng);
     setLoading(true);
     setError(null);
     const url = `/point-forecast?lat=${latlng.lat}&lon=${latlng.lng}`;
     try {
-      const response = await axiosInstance.get(url, { timeout: 60000 });
+      const response = await axiosInstance.get(url);
       setForecast(response.data.forecasts);
       setForecastAnalysis(response.data.forecastsAnalysis);
     } catch (error) {
@@ -127,18 +122,14 @@ const Home = () => {
       <h1 className="text-3xl font-bold text-center sm:text-left">Weather Forecast</h1>
       
       <ButtonGroup 
-        isInstructionsOpen={isInstructionsOpen}
-        setIsInstructionsOpen={setIsInstructionsOpen}
-        isCycloneInfoOpen={isCycloneInfoOpen}
-        setIsCycloneInfoOpen={setIsCycloneInfoOpen}
-        isHurricaneInfoOpen={isHurricaneInfoOpen}
-        setIsHurricaneInfoOpen={setIsHurricaneInfoOpen}
+        activeButton={activeButton}
+        setActiveButton={setActiveButton}
       />
 
       <Registration />
       {userId && <PositionUpdater userId={userId} />}
       
-      {isInstructionsOpen && (
+      {activeButton === 'instructions' && (
         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
           <h2 className="text-xl font-semibold mb-2">NWS Marine Weather Analysis</h2>
           <p className="mb-2">
@@ -158,50 +149,39 @@ const Home = () => {
         </div>
       )}
 
-    
+      <div className="space-y-4">
+        {Object.values(dataError).length > 0 && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong className="font-bold">Errors:</strong>
+            <ul className="mt-2 list-disc list-inside">
+              {Object.values(dataError).map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-<div className="space-y-4">
-  {Object.values(dataError).length > 0 && (
-    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-      <strong className="font-bold">Errors:</strong>
-      <ul className="mt-2 list-disc list-inside">
-        {Object.values(dataError).map((error, index) => (
-          <li key={index}>{error}</li>
-        ))}
-      </ul>
-    </div>
-  )}
-
-  <div className="h-[300px] sm:h-[400px] w-full relative">
-    {dataLoading && (
-      <div className="absolute inset-0 bg-gray-200 bg-opacity-75 flex items-center justify-center z-10">
-        <div className="text-lg font-semibold">Loading map data...</div>
-      </div>
-    )}
-    <Map 
-      onLocationClick={handleLocationClick} 
-      userPosition={userPosition}
-      cycloneShapefiles={cycloneShapefiles}
-      hurricaneShapefiles={hurricaneShapefiles}
-      hurricaneInfo={hurricaneInfo}
-    />
-  </div>
-</div>
-      
-      {isCycloneInfoOpen && <CycloneInfo setSelectedImage={setSelectedImage} />}
-      {isHurricaneInfoOpen && (
-        <div>
-          <h2 className="text-xl font-bold mb-2">Hurricane Information</h2>
-          {hurricaneInfoError ? (
-            <div className="text-red-500">{hurricaneInfoError}</div>
-          ) : hurricaneInfo ? (
-            <HurricaneInfo hurricaneInfo={hurricaneInfo} />
-          ) : (
-            <div>Loading hurricane information...</div>
+        <div className="h-[300px] sm:h-[400px] w-full relative">
+          {dataLoading && (
+            <div className="absolute inset-0 bg-gray-200 bg-opacity-75 flex items-center justify-center z-10">
+              <div className="text-lg font-semibold">Loading map data...</div>
+            </div>
           )}
+          <Map 
+            onLocationClick={handleLocationClick} 
+            userPosition={userPosition}
+            cycloneShapefiles={cycloneShapefiles}
+            hurricaneShapefiles={hurricaneShapefiles}
+            hurricaneInfo={hurricaneInfo}
+          />
         </div>
+      </div>
+      
+      {activeButton === 'cycloneInfo' && <CycloneInfo setSelectedImage={setSelectedImage} />}
+      
+      {activeButton === 'hurricaneInfo' && hurricaneInfo && (
+        <HurricaneInfo hurricaneInfo={hurricaneInfo} />
       )}
-
 
       {selectedImage && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[1000]" onClick={closeModal}>
